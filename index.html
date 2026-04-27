@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-title" content="Expenses"/>
 <meta name="theme-color" content="#6366F1"/>
 <title>Smart Expense Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--accent:#6366F1;--green:#10B981;--red:#E85D4A;--amber:#F59E0B;--r:14px;--rb:999px}
@@ -23,24 +24,53 @@ button{cursor:pointer;border-radius:var(--r);padding:11px 18px;font-weight:600;t
 button:active{opacity:.75}
 .btn-primary{background:var(--accent);color:#fff}
 .btn-green{background:var(--green);color:#fff}
+.btn-red{background:var(--red);color:#fff}
 .btn-ghost{background:var(--surf2);color:var(--muted);border:0.5px solid var(--border)}
 .card{background:var(--surf);border:0.5px solid var(--border);border-radius:var(--r)}
-.divider{height:0.5px;background:var(--border)}
 .badge{border-radius:var(--rb);padding:3px 9px;font-size:11px;font-weight:700}
 .pill-bar{display:flex;background:var(--surf2);border-radius:var(--rb);padding:4px;gap:2px}
 .pill{background:transparent;color:var(--muted);border-radius:var(--rb);padding:7px 13px;font-size:13px;font-weight:400;border:none;cursor:pointer;white-space:nowrap}
 .pill.on{background:#1E293B;color:#fff;font-weight:600}
 body.dark .pill.on{background:#334155}
-.icon-tile{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
 .row{display:flex;align-items:center;gap:12px;padding:13px 16px}
+.bar-wrap{height:7px;background:var(--surf2);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px;transition:width .4s}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
+.stat-card{text-align:center;padding:14px 8px}
+.stat-val{font-size:21px;font-weight:700}
+
+/* Toast */
 .toast{position:fixed;top:env(safe-area-inset-top,16px);left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;border-radius:var(--rb);padding:10px 20px;font-size:13px;font-weight:500;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3);opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 
-/* Desktop layout */
-#shell{max-width:680px;margin:0 auto;padding:16px 16px 100px}
+/* Sync indicator */
+.sync{position:fixed;top:env(safe-area-inset-top,12px);right:12px;font-size:11px;font-weight:600;border-radius:var(--rb);padding:4px 10px;z-index:998;transition:all .3s}
+.sync.saving{background:#FFFBEB;color:#6B3A00}
+.sync.saved{background:#ECFDF5;color:#065F46}
+.sync.error{background:#FEF0EE;color:#7A2518}
+.sync.hidden{opacity:0;pointer-events:none}
+
+/* Auth screen */
+#auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{background:var(--surf);border:0.5px solid var(--border);border-radius:20px;padding:32px 28px;width:100%;max-width:380px}
+.auth-logo{font-size:32px;margin-bottom:6px}
+.auth-title{font-size:20px;font-weight:700;margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.auth-tabs{display:flex;background:var(--surf2);border-radius:var(--rb);padding:4px;gap:2px;margin-bottom:20px}
+.auth-tab{flex:1;text-align:center;padding:8px;border:none;border-radius:var(--rb);font-size:13px;font-weight:400;background:transparent;color:var(--muted);cursor:pointer}
+.auth-tab.on{background:var(--surf);color:var(--text);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.auth-input-group{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.auth-err{font-size:12px;color:var(--red);background:#FEF0EE;border-radius:8px;padding:8px 12px;margin-bottom:12px}
+.auth-footer{text-align:center;font-size:12px;color:var(--muted);margin-top:16px}
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0}
+.divider-line{flex:1;height:0.5px;background:var(--border)}
+.divider-text{font-size:11px;color:var(--muted)}
+
+/* App shell */
+#app-screen{display:none}
+#shell{max-width:660px;margin:0 auto;padding:16px 16px 100px}
 #bottom-nav{display:none}
 
-/* Mobile layout */
 @media(max-width:600px){
   #shell{padding:12px 12px 90px}
   #bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--surf);border-top:0.5px solid var(--border);padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:100;justify-content:space-around}
@@ -48,39 +78,62 @@ body.dark .pill.on{background:#334155}
   #bottom-nav button.on{color:var(--accent)}
   #bottom-nav button .nav-icon{font-size:22px}
   #top-tabs{display:none}
-  .desktop-only{display:none}
 }
 @media(min-width:601px){
   #bottom-nav{display:none!important}
   #top-tabs{display:flex}
-}
-
-.bar-wrap{height:7px;background:var(--surf2);border-radius:4px;overflow:hidden}
-.bar-fill{height:100%;border-radius:4px;transition:width .4s}
-.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.stat-card{text-align:center;padding:14px 8px}
-.stat-label{font-size:11px;color:var(--muted);margin-bottom:4px}
-.stat-val{font-size:21px;font-weight:700}
-
-@media(max-width:400px){
-  .stat-val{font-size:17px}
-  .stat-label{font-size:10px}
 }
 </style>
 </head>
 <body class="light">
 
 <div id="toast-el" class="toast"></div>
+<div id="sync-el" class="sync hidden"></div>
 
-<div id="shell">
-  <div id="header"></div>
-  <div id="top-tabs" class="pill-bar" style="margin-bottom:18px"></div>
-  <div id="content"></div>
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">💸</div>
+    <div class="auth-title">Expense Tracker</div>
+    <div class="auth-sub">Sign in to sync your expenses across all devices.</div>
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-login" onclick="switchAuthTab('login')">Login</button>
+      <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">Sign Up</button>
+    </div>
+    <div id="auth-err" style="display:none" class="auth-err"></div>
+    <div class="auth-input-group">
+      <input id="auth-email" type="email" placeholder="Email address" onkeydown="if(event.key==='Enter')authSubmit()"/>
+      <input id="auth-password" type="password" placeholder="Password" onkeydown="if(event.key==='Enter')authSubmit()"/>
+      <div id="auth-confirm-wrap" style="display:none">
+        <input id="auth-confirm" type="password" placeholder="Confirm password" onkeydown="if(event.key==='Enter')authSubmit()"/>
+      </div>
+    </div>
+    <button class="btn-primary" id="auth-btn" onclick="authSubmit()" style="width:100%;padding:13px;font-size:14px">Login</button>
+    <div class="auth-footer" id="auth-mode-login">Don't have an account? <span onclick="switchAuthTab('signup')" style="color:var(--accent);cursor:pointer;font-weight:600">Sign up free</span></div>
+    <div class="auth-footer" id="auth-mode-signup" style="display:none">Already have an account? <span onclick="switchAuthTab('login')" style="color:var(--accent);cursor:pointer;font-weight:600">Login</span></div>
+    <div class="divider"><div class="divider-line"></div><div class="divider-text">or continue without account</div><div class="divider-line"></div></div>
+    <button class="btn-ghost" onclick="useOffline()" style="width:100%;font-size:13px">Use offline (local only)</button>
+  </div>
 </div>
 
-<nav id="bottom-nav"></nav>
+<!-- APP SCREEN -->
+<div id="app-screen">
+  <div id="shell">
+    <div id="header"></div>
+    <div id="top-tabs" class="pill-bar" style="margin-bottom:18px"></div>
+    <div id="content"></div>
+  </div>
+  <nav id="bottom-nav"></nav>
+</div>
 
 <script>
+// ── Supabase init ──
+const { createClient } = supabase;
+const sb = createClient(
+  "https://bymzxsrlfirxynwidoyc.supabase.co",
+  "sb_publishable_SqZJ79X9qhfThpaWy8KXMw_glLvyx27"
+);
+
 const TABS=[{label:"Add",icon:"➕"},{label:"Dashboard",icon:"📊"},{label:"Reports",icon:"📅"},{label:"Budgets",icon:"🎯"}];
 
 const DC={
@@ -93,8 +146,11 @@ const DC={
   Education:{kw:["course","udemy","coursera","book","study","school","college","tuition","class","exam","fee","notebook","learn","skill","training"],color:"#06B6D4",light:"#ECFEFF",dark:"#0E4C5A",icon:"📚"},
   Other:{kw:[],color:"#6B7280",light:"#F9FAFB",dark:"#374151",icon:"📦"},
 };
-
 const DB={Food:8000,Transport:3000,Entertainment:2000,Shopping:5000,Health:2000,Utilities:3000,Education:2000,Other:1000};
+
+let currentUser=null;
+let isOffline=false;
+let syncTimer=null;
 
 let S={
   dark:JSON.parse(localStorage.getItem("et_dark")||"false"),
@@ -104,83 +160,182 @@ let S={
   budgets:JSON.parse(localStorage.getItem("et_bud")||JSON.stringify(DB)),
   form:{desc:"",amount:"",date:new Date().toISOString().slice(0,10),cat:""},
   feedback:"",fbLoading:false,period:"monthly",
-  editExp:null,editAmt:"",
-  editBud:null,budInput:"",
+  editExp:null,editAmt:"",editBud:null,budInput:"",
   showAddCat:false,newCat:{name:"",icon:"🏷",color:"#6366F1"},
 };
 
-const save=()=>{
-  localStorage.setItem("et_exp",JSON.stringify(S.expenses));
-  localStorage.setItem("et_bud",JSON.stringify(S.budgets));
-  localStorage.setItem("et_cats",JSON.stringify(S.cats));
-  localStorage.setItem("et_dark",JSON.stringify(S.dark));
-};
-
-const fmt=n=>"₹"+Math.round(n).toLocaleString("en-IN");
-const isMobile=()=>window.innerWidth<=600;
-
-function categorize(desc){
-  const d=desc.toLowerCase();
-  for(const[cat,info]of Object.entries(S.cats)){
-    if(cat==="Other")continue;
-    if((info.kw||[]).some(k=>d.includes(k)))return cat;
-  }return"Other";
+// ── Auth helpers ──
+let authMode="login";
+function switchAuthTab(mode){
+  authMode=mode;
+  document.getElementById("tab-login").className="auth-tab"+(mode==="login"?" on":"");
+  document.getElementById("tab-signup").className="auth-tab"+(mode==="signup"?" on":"");
+  document.getElementById("auth-btn").textContent=mode==="login"?"Login":"Create Account";
+  document.getElementById("auth-confirm-wrap").style.display=mode==="signup"?"block":"none";
+  document.getElementById("auth-mode-login").style.display=mode==="login"?"block":"none";
+  document.getElementById("auth-mode-signup").style.display=mode==="signup"?"block":"none";
+  document.getElementById("auth-err").style.display="none";
 }
 
+function showAuthErr(msg){
+  const el=document.getElementById("auth-err");
+  el.textContent=msg;el.style.display="block";
+}
+
+async function authSubmit(){
+  const email=document.getElementById("auth-email").value.trim();
+  const password=document.getElementById("auth-password").value;
+  if(!email||!password){showAuthErr("Please enter email and password.");return;}
+  document.getElementById("auth-btn").textContent="Please wait…";
+  document.getElementById("auth-btn").disabled=true;
+  if(authMode==="signup"){
+    const confirm=document.getElementById("auth-confirm").value;
+    if(password!==confirm){showAuthErr("Passwords don't match.");resetAuthBtn();return;}
+    if(password.length<6){showAuthErr("Password must be at least 6 characters.");resetAuthBtn();return;}
+    const{error}=await sb.auth.signUp({email,password});
+    if(error){showAuthErr(error.message);resetAuthBtn();return;}
+    showAuthErr("✓ Check your email to confirm your account, then login.");
+    document.getElementById("auth-err").style.background="#ECFDF5";
+    document.getElementById("auth-err").style.color="#065F46";
+    switchAuthTab("login");resetAuthBtn();
+  }else{
+    const{data,error}=await sb.auth.signInWithPassword({email,password});
+    if(error){showAuthErr(error.message);resetAuthBtn();return;}
+    currentUser=data.user;
+    await loadCloudData();
+    launchApp();
+  }
+}
+
+function resetAuthBtn(){
+  const btn=document.getElementById("auth-btn");
+  btn.textContent=authMode==="login"?"Login":"Create Account";
+  btn.disabled=false;
+}
+
+function useOffline(){
+  isOffline=true;currentUser=null;launchApp();
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  currentUser=null;isOffline=false;
+  document.getElementById("app-screen").style.display="none";
+  document.getElementById("auth-screen").style.display="flex";
+  S.expenses=[];S.cats=JSON.parse(JSON.stringify(DC));S.budgets=JSON.parse(JSON.stringify(DB));
+  showToast("Logged out.");
+}
+
+// ── Cloud data ──
+async function loadCloudData(){
+  if(!currentUser)return;
+  try{
+    const{data,error}=await sb.from("user_data").select("data").eq("user_id",currentUser.id).single();
+    if(error||!data)return;
+    const d=JSON.parse(data.data);
+    if(d.expenses)S.expenses=d.expenses;
+    if(d.cats)S.cats=d.cats;
+    if(d.budgets)S.budgets=d.budgets;
+    if(d.dark!==undefined)S.dark=d.dark;
+  }catch(e){console.warn("Cloud load failed, using local",e);}
+}
+
+function showSync(state){
+  const el=document.getElementById("sync-el");
+  el.className="sync "+state;
+  const labels={saving:"Saving…",saved:"✓ Saved",error:"Sync error"};
+  el.textContent=labels[state]||"";
+  if(state==="saved"){setTimeout(()=>el.classList.add("hidden"),2000);}else{el.classList.remove("hidden");}
+}
+
+async function cloudSave(){
+  if(!currentUser||isOffline){
+    localStorage.setItem("et_exp",JSON.stringify(S.expenses));
+    localStorage.setItem("et_bud",JSON.stringify(S.budgets));
+    localStorage.setItem("et_cats",JSON.stringify(S.cats));
+    localStorage.setItem("et_dark",JSON.stringify(S.dark));
+    return;
+  }
+  showSync("saving");
+  try{
+    const payload={user_id:currentUser.id,data:JSON.stringify({expenses:S.expenses,cats:S.cats,budgets:S.budgets,dark:S.dark}),updated_at:new Date().toISOString()};
+    const{error}=await sb.from("user_data").upsert(payload,{onConflict:"user_id"});
+    if(error)throw error;
+    showSync("saved");
+    // also mirror to localStorage as offline fallback
+    localStorage.setItem("et_exp",JSON.stringify(S.expenses));
+    localStorage.setItem("et_bud",JSON.stringify(S.budgets));
+    localStorage.setItem("et_cats",JSON.stringify(S.cats));
+  }catch(e){showSync("error");console.warn("Save error",e);}
+}
+
+function debouncedSave(){
+  clearTimeout(syncTimer);syncTimer=setTimeout(cloudSave,800);
+}
+
+// ── App boot ──
+function launchApp(){
+  document.getElementById("auth-screen").style.display="none";
+  document.getElementById("app-screen").style.display="block";
+  applyTheme();render();
+}
+
+async function checkSession(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){currentUser=session.user;await loadCloudData();launchApp();}
+}
+checkSession();
+
+// ── Util ──
+const fmt=n=>"₹"+Math.round(n).toLocaleString("en-IN");
+function categorize(desc){
+  const d=desc.toLowerCase();
+  for(const[cat,info]of Object.entries(S.cats)){if(cat==="Other")continue;if((info.kw||[]).some(k=>d.includes(k)))return cat;}
+  return"Other";
+}
 function getPKey(d){
   if(S.period==="weekly"){const dt=new Date(d),day=dt.getDay(),diff=dt.getDate()-day+(day===0?-6:1);return new Date(dt.setDate(diff)).toISOString().slice(0,10);}
   if(S.period==="monthly")return d.slice(0,7);
   if(S.period==="quarterly"){const m=parseInt(d.slice(5,7)),y=d.slice(0,4);return`${y}-Q${Math.ceil(m/3)}`;}
   return d.slice(0,4);
 }
-
 let toastTimer;
-function showToast(msg){
-  const el=document.getElementById("toast-el");
-  el.textContent=msg;el.classList.add("show");
-  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2500);
-}
-
+function showToast(msg){const el=document.getElementById("toast-el");el.textContent=msg;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),2500);}
 function catTotals(){return S.expenses.reduce((a,e)=>{a[e.cat]=(a[e.cat]||0)+e.amount;return a;},{});}
 const totalSpend=()=>Object.values(catTotals()).reduce((a,b)=>a+b,0);
 const totalBudget=()=>Object.values(S.budgets).reduce((a,b)=>a+b,0);
 
-function tile(cat,size=40){
-  const info=S.cats[cat]||DC.Other;
-  return`<div class="icon-tile" style="width:${size}px;height:${size}px;background:${S.dark?info.dark:info.light}">${info.icon}</div>`;
-}
-
 // ── Actions ──
 window.addExpense=()=>{
-  const f=S.form;
-  if(!f.desc||!f.amount||isNaN(f.amount)||+f.amount<=0){showToast("Enter description & amount");return;}
+  const f=S.form;if(!f.desc||!f.amount||isNaN(f.amount)||+f.amount<=0){showToast("Enter description & amount");return;}
   const cat=f.cat||categorize(f.desc);
   S.expenses.unshift({id:Date.now(),desc:f.desc,amount:+f.amount,date:f.date,cat});
-  save();S.form={...f,desc:"",amount:"",cat:""};render();showToast(`Added to ${cat}!`);
+  debouncedSave();S.form={...f,desc:"",amount:"",cat:""};render();showToast(`Added to ${cat}!`);
 };
-window.delExp=id=>{S.expenses=S.expenses.filter(e=>e.id!=id);save();render();};
+window.delExp=id=>{S.expenses=S.expenses.filter(e=>e.id!=id);debouncedSave();render();};
 window.startEditExp=(id,amt)=>{S.editExp=id;S.editAmt=amt;render();};
 window.saveEditAmt=()=>{
   const v=parseFloat(S.editAmt);if(isNaN(v)||v<=0){showToast("Invalid amount");return;}
   S.expenses=S.expenses.map(e=>e.id==S.editExp?{...e,amount:v}:e);
-  save();S.editExp=null;render();showToast("Updated!");
+  debouncedSave();S.editExp=null;render();showToast("Updated!");
 };
 window.cancelEditExp=()=>{S.editExp=null;render();};
 window.pickCat=cat=>{S.form.cat=cat;render();};
 window.startEditBud=(cat,val)=>{S.editBud=cat;S.budInput=val;render();};
 window.saveEditBud=cat=>{
   const v=parseFloat(S.budInput);if(isNaN(v)||v<0){showToast("Invalid amount");return;}
-  S.budgets[cat]=v;save();S.editBud=null;render();showToast("Budget updated!");
+  S.budgets[cat]=v;debouncedSave();S.editBud=null;render();showToast("Budget updated!");
 };
 window.cancelEditBud=()=>{S.editBud=null;render();};
 window.addCat=()=>{
   const name=S.newCat.name.trim();if(!name){showToast("Enter a name");return;}
   S.cats[name]={kw:[],color:S.newCat.color,light:"#F5F3FF",dark:"#2D1B69",icon:S.newCat.icon};
-  S.budgets[name]=2000;save();S.newCat={name:"",icon:"🏷",color:"#6366F1"};S.showAddCat=false;render();showToast(`"${name}" added!`);
+  S.budgets[name]=2000;debouncedSave();S.newCat={name:"",icon:"🏷",color:"#6366F1"};S.showAddCat=false;render();showToast(`"${name}" added!`);
 };
-window.toggleDark=()=>{S.dark=!S.dark;save();applyTheme();render();};
+window.toggleDark=()=>{S.dark=!S.dark;debouncedSave();applyTheme();render();};
 window.setPeriod=p=>{S.period=p;render();};
 window.setTab=i=>{S.tab=i;S.editExp=null;S.editBud=null;render();};
+window.logout=logout;
 
 window.downloadExcel=()=>{
   if(!S.expenses.length){showToast("No expenses to export");return;}
@@ -203,8 +358,8 @@ window.importCSV=input=>{
       }).filter(Boolean);
       if(!data.length){showToast("No valid data found");return;}
       const merged=[...data,...S.expenses].filter((e,i,arr)=>arr.findIndex(x=>x.date===e.date&&x.desc===e.desc&&x.amount===e.amount)===i);
-      S.expenses=merged;save();render();showToast(`Imported ${data.length} expenses!`);
-    }catch{showToast("Failed to parse file");}
+      S.expenses=merged;debouncedSave();render();showToast(`Imported ${data.length} expenses!`);
+    }catch{showToast("Failed to parse file.");}
     input.value="";
   };
   reader.readAsText(file);
@@ -224,12 +379,9 @@ window.getFeedback=async()=>{
   S.fbLoading=false;render();
 };
 
-// bind live inputs without full re-render
 function bindInputs(){
   const q=id=>document.getElementById(id);
-  const bi=q("i-desc");if(bi)bi.oninput=e=>{S.form.desc=e.target.value;S.form.cat="";
-    const cd=q("cat-detect");if(cd){const det=S.form.cat||categorize(S.form.desc||"");const info=S.cats[det]||DC.Other;cd.textContent=det;cd.style.color=info.color;}
-  };
+  const bi=q("i-desc");if(bi)bi.oninput=e=>{S.form.desc=e.target.value;S.form.cat="";const cd=q("cat-detect");if(cd){const det=S.form.cat||categorize(S.form.desc||"");const info=S.cats[det]||DC.Other;cd.textContent=det;cd.style.color=info.color;}};
   const ba=q("i-amt");if(ba)ba.oninput=e=>S.form.amount=e.target.value;
   const bd=q("i-date");if(bd)bd.oninput=e=>S.form.date=e.target.value;
   const ea=q("i-editamt");if(ea){ea.oninput=e=>S.editAmt=e.target.value;ea.focus();}
@@ -241,10 +393,10 @@ function bindInputs(){
 
 function applyTheme(){document.body.className=S.dark?"dark":"light";}
 
+// ── Render helpers ──
 function renderAdd(){
-  const ct=catTotals();const det=S.form.cat||categorize(S.form.desc||"x");const info=S.cats[det]||DC.Other;
-  return`
-  <div class="card" style="padding:16px;margin-bottom:16px">
+  const det=S.form.cat||categorize(S.form.desc||"x");const info=S.cats[det]||DC.Other;
+  return`<div class="card" style="padding:16px;margin-bottom:16px">
     <p style="font-weight:700;font-size:15px;margin-bottom:14px">New Expense</p>
     <div style="display:flex;flex-direction:column;gap:10px">
       <input id="i-desc" placeholder="Description (e.g. Zomato, Uber…)" value="${S.form.desc}"/>
@@ -269,19 +421,9 @@ function renderAdd(){
     const ci=S.cats[e.cat]||DC.Other;const isEdit=S.editExp==e.id;
     return`<div class="row" style="${i<arr.length-1?"border-bottom:0.5px solid var(--border)":""}">
       <div style="width:40px;height:40px;border-radius:11px;background:${S.dark?ci.dark:ci.light};display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">${ci.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.desc}</div>
-        <div style="font-size:11px;color:var(--muted)">${e.cat} · ${e.date}</div>
-      </div>
-      ${isEdit?`<div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
-        <input id="i-editamt" type="number" value="${S.editAmt}" onkeydown="if(event.key==='Enter')saveEditAmt()" style="width:80px"/>
-        <button class="btn-green" onclick="saveEditAmt()" style="padding:8px 10px">✓</button>
-        <button class="btn-ghost" onclick="cancelEditExp()" style="padding:8px 10px">✕</button>
-      </div>`:`<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span style="font-weight:700;font-size:14px;color:${ci.color}">${fmt(e.amount)}</span>
-        <button onclick="startEditExp(${e.id},${e.amount})" style="background:${S.dark?"#1E3A6E":"#EFF6FF"};color:#3B82F6;padding:5px 10px;font-size:12px">Edit</button>
-        <button onclick="delExp(${e.id})" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--red);padding:5px 10px;font-size:12px">Del</button>
-      </div>`}
+      <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.desc}</div><div style="font-size:11px;color:var(--muted)">${e.cat} · ${e.date}</div></div>
+      ${isEdit?`<div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><input id="i-editamt" type="number" value="${S.editAmt}" onkeydown="if(event.key==='Enter')saveEditAmt()" style="width:80px"/><button class="btn-green" onclick="saveEditAmt()" style="padding:8px 10px">✓</button><button class="btn-ghost" onclick="cancelEditExp()" style="padding:8px 10px">✕</button></div>`
+      :`<div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><span style="font-weight:700;font-size:14px;color:${ci.color}">${fmt(e.amount)}</span><button onclick="startEditExp(${e.id},${e.amount})" style="background:${S.dark?"#1E3A6E":"#EFF6FF"};color:#3B82F6;padding:5px 10px;font-size:12px">Edit</button><button onclick="delExp(${e.id})" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--red);padding:5px 10px;font-size:12px">Del</button></div>`}
     </div>`;
   }).join("")}
   </div>`;
@@ -289,42 +431,21 @@ function renderAdd(){
 
 function renderDashboard(){
   const ct=catTotals();const ts=totalSpend();const tb=totalBudget();
-  return`
-  <div class="stat-grid">
-    ${[["Total Spent",fmt(ts),"#6366F1"],["Budget Left",fmt(Math.max(0,tb-ts)),"#10B981"],["Entries",S.expenses.length,"#F59E0B"]].map(([l,v,c])=>`
-    <div class="card stat-card"><div class="stat-label">${l}</div><div class="stat-val" style="color:${c}">${v}</div></div>`).join("")}
+  return`<div class="stat-grid">
+    ${[["Total Spent",fmt(ts),"#6366F1"],["Budget Left",fmt(Math.max(0,tb-ts)),"#10B981"],["Entries",S.expenses.length,"#F59E0B"]].map(([l,v,c])=>`<div class="card stat-card"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">${l}</div><div class="stat-val" style="color:${c}">${v}</div></div>`).join("")}
   </div>
   <p style="font-weight:700;font-size:14px;margin-bottom:10px">By Category</p>
   <div class="card" style="overflow:hidden;padding:0;margin-bottom:20px">
   ${Object.entries(S.cats).map(([cat,ci],i,arr)=>{
     const spent=ct[cat]||0;const budget=S.budgets[cat]||0;if(!spent&&!budget)return"";
-    const pct=budget>0?Math.min((spent/budget)*100,100):0;
-    const over=spent>budget&&budget>0;const warn=!over&&pct>75&&budget>0;
-    return`<div style="padding:13px 16px;${i<arr.length-1?"border-bottom:0.5px solid var(--border)":""}">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:40px;height:40px;border-radius:11px;background:${S.dark?ci.dark:ci.light};display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">${ci.icon}</div>
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:6px;flex-wrap:wrap">
-            <span style="font-weight:600;font-size:13px">${cat}</span>
-            <div style="display:flex;align-items:center;gap:5px;flex-shrink:0">
-              ${over?`<span class="badge" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--red)">over!</span>`:""}
-              ${warn?`<span class="badge" style="background:${S.dark?"#3B2A00":"#FFFBEB"};color:var(--amber)">near!</span>`:""}
-              <span style="font-size:13px;font-weight:700;color:${over?"var(--red)":"var(--text)"}">${fmt(spent)}</span>
-              ${budget>0?`<span style="font-size:11px;color:var(--muted)">/ ${fmt(budget)}</span>`:""}
-            </div>
-          </div>
-          <div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${over?"var(--red)":warn?"var(--amber)":ci.color}"></div></div>
-        </div>
-      </div>
-    </div>`;
+    const pct=budget>0?Math.min((spent/budget)*100,100):0;const over=spent>budget&&budget>0;const warn=!over&&pct>75&&budget>0;
+    return`<div style="padding:13px 16px;${i<arr.length-1?"border-bottom:0.5px solid var(--border)":""}"><div style="display:flex;align-items:center;gap:10px"><div style="width:40px;height:40px;border-radius:11px;background:${S.dark?ci.dark:ci.light};display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">${ci.icon}</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:6px;flex-wrap:wrap"><span style="font-weight:600;font-size:13px">${cat}</span><div style="display:flex;align-items:center;gap:5px;flex-shrink:0">${over?`<span class="badge" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--red)">over!</span>`:""}${warn?`<span class="badge" style="background:${S.dark?"#3B2A00":"#FFFBEB"};color:var(--amber)">near!</span>`:""}<span style="font-size:13px;font-weight:700;color:${over?"var(--red)":"var(--text)"}">${fmt(spent)}</span>${budget>0?`<span style="font-size:11px;color:var(--muted)">/ ${fmt(budget)}</span>`:""}</div></div><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${over?"var(--red)":warn?"var(--amber)":ci.color}"></div></div></div></div></div>`;
   }).join("")}
   </div>
   <div class="card" style="padding:16px;background:${S.dark?"#1A1040":"#F5F3FF"};border-color:${S.dark?"#3B2A80":"#C4B5FD"}">
     <p style="font-weight:700;font-size:14px;color:${S.dark?"#C4B5FD":"#4C1D95"}">AI Spending Feedback</p>
     <p style="font-size:12px;color:${S.dark?"#A78BFA":"#7C3AED"};margin:2px 0 12px">Personalized insights for you</p>
-    <button onclick="getFeedback()" class="btn-primary" ${S.fbLoading||!S.expenses.length?"disabled":""} style="opacity:${!S.expenses.length?.5:1};width:100%">
-      ${S.fbLoading?"Generating…":"Get AI Feedback ↗"}
-    </button>
+    <button onclick="getFeedback()" class="btn-primary" ${S.fbLoading||!S.expenses.length?"disabled":""} style="opacity:${!S.expenses.length?.5:1};width:100%">${S.fbLoading?"Generating…":"Get AI Feedback ↗"}</button>
     ${S.feedback?`<div style="font-size:13px;line-height:1.8;color:${S.dark?"#E2E8F0":"#1E1B4B"};white-space:pre-wrap;border-top:0.5px solid ${S.dark?"#3B2A80":"#C4B5FD"};padding-top:12px;margin-top:14px">${S.feedback}</div>`:""}
     ${!S.expenses.length?`<p style="font-size:12px;color:var(--muted);margin-top:8px">Add some expenses first.</p>`:""}
   </div>`;
@@ -333,8 +454,7 @@ function renderDashboard(){
 function renderReports(){
   const pg=S.expenses.reduce((acc,e)=>{const k=getPKey(e.date);if(!acc[k])acc[k]={};acc[k][e.cat]=(acc[k][e.cat]||0)+e.amount;return acc;},{});
   const sorted=Object.keys(pg).sort().reverse();
-  return`
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;flex-wrap:wrap">
+  return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px;flex-wrap:wrap">
     <div class="pill-bar" style="flex-wrap:nowrap;overflow-x:auto">
       ${["weekly","monthly","quarterly","yearly"].map(p=>`<button class="pill ${S.period===p?"on":""}" onclick="setPeriod('${p}')">${p.charAt(0).toUpperCase()+p.slice(1)}</button>`).join("")}
     </div>
@@ -346,98 +466,51 @@ function renderReports(){
   ${!sorted.length?`<div class="card" style="padding:24px;text-align:center;color:var(--muted)">No data yet. Add some expenses first!</div>`:""}
   ${sorted.map(period=>{
     const data=pg[period];const total=Object.values(data).reduce((a,b)=>a+b,0);
-    return`<div class="card" style="margin-bottom:14px;padding:16px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:14px">
-        <span style="font-weight:700;font-size:14px">${period}</span>
-        <span style="font-weight:700;color:var(--accent)">${fmt(total)}</span>
-      </div>
-      ${Object.entries(data).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
-        const ci=S.cats[cat]||DC.Other;const pct=Math.round((amt/total)*100);
-        return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <span style="font-size:20px;width:26px;text-align:center;flex-shrink:0">${ci.icon}</span>
-          <span style="font-size:13px;width:85px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat}</span>
-          <div class="bar-wrap" style="flex:1"><div class="bar-fill" style="width:${pct}%;background:${ci.color}"></div></div>
-          <span style="font-size:12px;color:var(--muted);flex-shrink:0;min-width:90px;text-align:right">${fmt(amt)} (${pct}%)</span>
-        </div>`;
-      }).join("")}
-    </div>`;
+    return`<div class="card" style="margin-bottom:14px;padding:16px"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><span style="font-weight:700;font-size:14px">${period}</span><span style="font-weight:700;color:var(--accent)">${fmt(total)}</span></div>${Object.entries(data).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{const ci=S.cats[cat]||DC.Other;const pct=Math.round((amt/total)*100);return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:20px;width:26px;text-align:center;flex-shrink:0">${ci.icon}</span><span style="font-size:13px;width:85px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat}</span><div class="bar-wrap" style="flex:1"><div class="bar-fill" style="width:${pct}%;background:${ci.color}"></div></div><span style="font-size:12px;color:var(--muted);flex-shrink:0;min-width:90px;text-align:right">${fmt(amt)} (${pct}%)</span></div>`;}).join("")}</div>`;
   }).join("")}`;
 }
 
 function renderBudgets(){
   const ct=catTotals();
-  return`
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+  return`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
     <p style="font-size:13px;color:var(--muted)">Monthly limits per category</p>
     <button class="btn-primary" onclick="S.showAddCat=!S.showAddCat;render()" style="font-size:13px;padding:9px 14px">+ New</button>
   </div>
-  ${S.showAddCat?`<div class="card" style="padding:16px;margin-bottom:14px;border-color:var(--accent)">
-    <p style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:12px">Add Custom Category</p>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <input id="i-newcat" placeholder="Category name" value="${S.newCat.name}"/>
-      <div style="display:flex;gap:8px">
-        <input id="i-newicon" placeholder="Icon" value="${S.newCat.icon}" style="width:60px;text-align:center;font-size:18px"/>
-        <input id="i-newcolor" type="color" value="${S.newCat.color}" style="flex:1"/>
-      </div>
-      <div style="display:flex;gap:8px">
-        <button class="btn-primary" onclick="addCat()" style="flex:1">Add Category</button>
-        <button class="btn-ghost" onclick="S.showAddCat=false;render()" style="flex:1">Cancel</button>
-      </div>
-    </div>
-  </div>`:""}
+  ${S.showAddCat?`<div class="card" style="padding:16px;margin-bottom:14px;border-color:var(--accent)"><p style="font-weight:700;font-size:13px;color:var(--accent);margin-bottom:12px">Add Custom Category</p><div style="display:flex;flex-direction:column;gap:8px"><input id="i-newcat" placeholder="Category name" value="${S.newCat.name}"/><div style="display:flex;gap:8px"><input id="i-newicon" placeholder="Icon" value="${S.newCat.icon}" style="width:60px;text-align:center;font-size:18px"/><input id="i-newcolor" type="color" value="${S.newCat.color}" style="flex:1"/></div><div style="display:flex;gap:8px"><button class="btn-primary" onclick="addCat()" style="flex:1">Add Category</button><button class="btn-ghost" onclick="S.showAddCat=false;render()" style="flex:1">Cancel</button></div></div></div>`:""}
   <div class="card" style="overflow:hidden;padding:0">
   ${Object.entries(S.cats).map(([cat,ci],i,arr)=>{
     const budget=S.budgets[cat]||0;const spent=ct[cat]||0;const over=spent>budget&&budget>0;const isEdit=S.editBud===cat;
-    return`<div class="row" style="${i<arr.length-1?"border-bottom:0.5px solid var(--border)":""}">
-      <div style="width:40px;height:40px;border-radius:11px;background:${S.dark?ci.dark:ci.light};display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">${ci.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:13px">${cat}</div>
-        <div style="font-size:12px;color:${over?"var(--red)":"var(--muted)"}">Spent: ${fmt(spent)}</div>
-      </div>
-      ${isEdit?`<div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
-        <input id="i-budamt" type="number" value="${S.budInput}" onkeydown="if(event.key==='Enter')saveEditBud('${cat}')" style="width:85px"/>
-        <button class="btn-green" onclick="saveEditBud('${cat}')" style="padding:8px 10px">✓</button>
-        <button class="btn-ghost" onclick="cancelEditBud()" style="padding:8px 10px">✕</button>
-      </div>`:`<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        ${over?`<span class="badge" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--red)">over!</span>`:""}
-        <span style="font-weight:700;color:${ci.color}">${fmt(budget)}</span>
-        <button onclick="startEditBud('${cat}',${budget})" style="background:${S.dark?"#1E3A6E":"#EFF6FF"};color:#3B82F6;padding:6px 12px;font-size:12px">Edit</button>
-      </div>`}
-    </div>`;
+    return`<div class="row" style="${i<arr.length-1?"border-bottom:0.5px solid var(--border)":""}"><div style="width:40px;height:40px;border-radius:11px;background:${S.dark?ci.dark:ci.light};display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0">${ci.icon}</div><div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px">${cat}</div><div style="font-size:12px;color:${over?"var(--red)":"var(--muted)"}">Spent: ${fmt(spent)}</div></div>${isEdit?`<div style="display:flex;gap:6px;align-items:center;flex-shrink:0"><input id="i-budamt" type="number" value="${S.budInput}" onkeydown="if(event.key==='Enter')saveEditBud('${cat}')" style="width:85px"/><button class="btn-green" onclick="saveEditBud('${cat}')" style="padding:8px 10px">✓</button><button class="btn-ghost" onclick="cancelEditBud()" style="padding:8px 10px">✕</button></div>`:`<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">${over?`<span class="badge" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--red)">over!</span>`:""}<span style="font-weight:700;color:${ci.color}">${fmt(budget)}</span><button onclick="startEditBud('${cat}',${budget})" style="background:${S.dark?"#1E3A6E":"#EFF6FF"};color:#3B82F6;padding:6px 12px;font-size:12px">Edit</button></div>`}</div>`;
   }).join("")}
   </div>`;
 }
 
 function render(){
   applyTheme();
-  // Header
   const ts=totalSpend();const tb=totalBudget();
+  const userLabel=isOffline?"Offline mode":(currentUser?.email||"");
   document.getElementById("header").innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
     <div>
       <h2 style="font-size:20px;font-weight:800;letter-spacing:-0.5px">Expense Tracker</h2>
-      <p style="font-size:13px;color:var(--muted);margin-top:2px">${fmt(ts)} spent · ${fmt(Math.max(0,tb-ts))} left</p>
+      <p style="font-size:12px;color:var(--muted);margin-top:2px">${userLabel?`<span style="font-size:11px;background:${isOffline?"#FFFBEB":"#ECFDF5"};color:${isOffline?"#6B3A00":"#065F46"};border-radius:999px;padding:2px 8px;font-weight:600">${isOffline?"⚡ Offline":"☁ "+userLabel}</span> · `:""} ${fmt(ts)} spent · ${fmt(Math.max(0,tb-ts))} left</p>
     </div>
-    <button onclick="toggleDark()" style="background:var(--surf2);color:var(--text);border:0.5px solid var(--border);border-radius:var(--rb);padding:8px 14px;font-size:13px;font-weight:500">${S.dark?"☀ Light":"🌙 Dark"}</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button onclick="toggleDark()" style="background:var(--surf2);color:var(--text);border:0.5px solid var(--border);border-radius:var(--rb);padding:7px 12px;font-size:12px;font-weight:500">${S.dark?"☀":"🌙"}</button>
+      ${!isOffline&&currentUser?`<button onclick="logout()" style="background:var(--surf2);color:var(--muted);border:0.5px solid var(--border);border-radius:var(--rb);padding:7px 12px;font-size:12px;font-weight:500">Logout</button>`:""}
+    </div>
   </div>`;
 
-  // Top tabs (desktop)
   const tt=document.getElementById("top-tabs");
   if(tt)tt.innerHTML=TABS.map((t,i)=>`<button class="pill ${S.tab===i?"on":""}" onclick="setTab(${i})">${t.icon} ${t.label}</button>`).join("");
 
-  // Bottom nav (mobile)
-  document.getElementById("bottom-nav").innerHTML=TABS.map((t,i)=>`
-  <button class="${S.tab===i?"on":""}" onclick="setTab(${i})">
-    <span class="nav-icon">${t.icon}</span>${t.label}
-  </button>`).join("");
+  document.getElementById("bottom-nav").innerHTML=TABS.map((t,i)=>`<button class="${S.tab===i?"on":""}" onclick="setTab(${i})"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join("");
 
-  // Content
   const renders=[renderAdd,renderDashboard,renderReports,renderBudgets];
   document.getElementById("content").innerHTML=renders[S.tab]();
   bindInputs();
 }
 
-render();
 window.addEventListener("resize",render);
 </script>
 </body>
