@@ -17,10 +17,9 @@ body.light{--bg:#F8FAFC;--s:#fff;--s2:#F1F5F9;--b:rgba(0,0,0,0.08);--t:#0F172A;-
 body.dark{--bg:#0F172A;--s:#1E293B;--s2:#263045;--b:rgba(255,255,255,0.08);--t:#F1F5F9;--m:#94A3B8}
 body{background:var(--bg);color:var(--t)}
 
-/* inputs — key fix for mobile */
 input,select,textarea{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:16px;/* prevents iOS zoom */
+  font-size:16px;
   color:var(--t);
   background:var(--s2);
   border:1px solid var(--b);
@@ -32,11 +31,16 @@ input,select,textarea{
   appearance:none;
   outline:none;
   touch-action:manipulation;
+  -webkit-user-select:text;
+  user-select:text;
 }
-input:focus,select:focus,textarea:focus{border-color:var(--a);background:var(--s)}
+input:focus,select:focus,textarea:focus{border-color:var(--a);background:var(--s);outline:none}
 input[type=color]{padding:4px;height:46px;cursor:pointer}
 input[type=file]{display:none}
 input[type=date]{-webkit-appearance:none;appearance:none}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
 
 button{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -45,9 +49,10 @@ button{
   padding:13px 18px;cursor:pointer;
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
-  transition:opacity .15s,transform .1s;
+  transition:opacity .15s;
+  -webkit-appearance:none;
 }
-button:active{opacity:.8;transform:scale(.98)}
+button:active{opacity:.75}
 .bp{background:var(--a);color:#fff}
 .bg{background:var(--g);color:#fff}
 .br{background:var(--r);color:#fff}
@@ -55,127 +60,96 @@ button:active{opacity:.8;transform:scale(.98)}
 
 .card{background:var(--s);border:1px solid var(--b);border-radius:var(--rad)}
 .row{display:flex;align-items:center;gap:12px;padding:13px 16px}
-.divider{height:1px;background:var(--b)}
 .badge{border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700}
-
-/* toast */
-#toast{position:fixed;top:max(env(safe-area-inset-top),16px);left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;border-radius:999px;padding:10px 22px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .25s;pointer-events:none}
-#toast.show{opacity:1}
-
-/* sync dot */
-#sync{position:fixed;top:max(env(safe-area-inset-top),12px);right:14px;font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px;z-index:998;transition:all .3s;opacity:0}
-#sync.on{opacity:1}
-#sync.saving{background:#FFFBEB;color:#6B3A00}
-#sync.saved{background:#ECFDF5;color:#065F46}
-#sync.err{background:#FEF0EE;color:#7A2518}
-
-/* pill tabs */
 .pill-bar{display:flex;background:var(--s2);border-radius:999px;padding:4px;gap:2px;overflow-x:auto;scrollbar-width:none}
 .pill-bar::-webkit-scrollbar{display:none}
 .pill{background:transparent;color:var(--m);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;border:none;cursor:pointer;white-space:nowrap;touch-action:manipulation}
 .pill.on{background:#1E293B;color:#fff;font-weight:700}
 body.dark .pill.on{background:#334155}
 
-/* stat grid */
-.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.scard{text-align:center;padding:14px 8px;border-radius:var(--rad)}
-
-/* bar */
-.bwrap{height:8px;background:var(--s2);border-radius:4px;overflow:hidden;margin-top:6px}
-.bfill{height:100%;border-radius:4px;transition:width .4s}
-
-/* icon tile */
 .tile{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.bwrap{height:8px;background:var(--s2);border-radius:4px;overflow:hidden;margin-top:6px}
+.bfill{height:100%;border-radius:4px}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
 
-/* ── AUTH ── */
-#auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-card{background:var(--s);border:1px solid var(--b);border-radius:20px;padding:32px 26px;width:100%;max-width:400px}
-.auth-logo{font-size:36px;margin-bottom:8px}
-.auth-h{font-size:22px;font-weight:800;margin-bottom:4px}
-.auth-sub{font-size:13px;color:var(--m);margin-bottom:22px;line-height:1.5}
-.auth-tabs{display:flex;background:var(--s2);border-radius:999px;padding:4px;gap:2px;margin-bottom:20px}
-.auth-tab{flex:1;text-align:center;padding:9px;border:none;border-radius:999px;font-size:13px;font-weight:500;background:transparent;color:var(--m);cursor:pointer;touch-action:manipulation}
-.auth-tab.on{background:var(--s);color:var(--t);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1)}
-.auth-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
-.auth-msg{font-size:13px;border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.5}
-.auth-msg.err{background:#FEF0EE;color:#7A2518}
-.auth-msg.ok{background:#ECFDF5;color:#065F46}
-.auth-or{display:flex;align-items:center;gap:10px;margin:16px 0}
-.auth-or-line{flex:1;height:1px;background:var(--b)}
-.auth-or-text{font-size:11px;color:var(--m)}
-.forgot-link{text-align:center;font-size:13px;color:var(--a);cursor:pointer;margin-top:12px;font-weight:600;touch-action:manipulation}
+#toast{position:fixed;top:max(env(safe-area-inset-top),16px);left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;border-radius:999px;padding:10px 22px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+#sync{position:fixed;top:max(env(safe-area-inset-top),12px);right:14px;font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px;z-index:998;opacity:0;transition:all .3s;pointer-events:none}
+#sync.on{opacity:1}
+#sync.saving{background:#FFFBEB;color:#6B3A00}
+#sync.saved{background:#ECFDF5;color:#065F46}
+#sync.err{background:#FEF0EE;color:#7A2518}
 
-/* ── APP ── */
+/* AUTH */
+#auth-wrap,#forgot-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+#forgot-wrap{display:none}
+.acard{background:var(--s);border:1px solid var(--b);border-radius:20px;padding:32px 26px;width:100%;max-width:400px}
+.ath{font-size:22px;font-weight:800;margin-bottom:4px}
+.asub{font-size:13px;color:var(--m);margin-bottom:22px;line-height:1.5}
+.atabs{display:flex;background:var(--s2);border-radius:999px;padding:4px;gap:2px;margin-bottom:20px}
+.atab{flex:1;text-align:center;padding:9px;border:none;border-radius:999px;font-size:14px;font-weight:500;background:transparent;color:var(--m);cursor:pointer;touch-action:manipulation}
+.atab.on{background:var(--s);color:var(--t);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.amsg{font-size:13px;border-radius:10px;padding:10px 14px;margin-bottom:14px;line-height:1.5;display:none}
+.amsg.err{background:#FEF0EE;color:#7A2518;display:block}
+.amsg.ok{background:#ECFDF5;color:#065F46;display:block}
+.aor{display:flex;align-items:center;gap:10px;margin:16px 0}
+.aor-l{flex:1;height:1px;background:var(--b)}
+.flink{text-align:center;font-size:13px;color:var(--a);cursor:pointer;margin-top:12px;font-weight:600;touch-action:manipulation}
+
+/* APP */
 #app-wrap{display:none}
 #shell{max-width:660px;margin:0 auto;padding:16px 16px 110px}
-
-/* bottom nav mobile */
 #bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s);border-top:1px solid var(--b);padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:200;justify-content:space-around}
-#bnav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--m);padding:4px 10px;min-width:56px;touch-action:manipulation}
+#bnav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--m);padding:4px 10px;min-width:56px;touch-action:manipulation;border-radius:10px}
 #bnav button.on{color:var(--a)}
-#bnav .ni{font-size:22px}
+.ni{font-size:22px}
 
-@media(max-width:599px){
-  #bnav{display:flex}
-  #top-tabs{display:none}
-  #shell{padding:12px 12px 100px}
-}
-@media(min-width:600px){
-  #bnav{display:none!important}
-  #top-tabs{display:flex!important}
-}
+@media(max-width:599px){#bnav{display:flex}#top-tabs{display:none!important}#shell{padding:12px 12px 100px}}
+@media(min-width:600px){#bnav{display:none!important}#top-tabs{display:flex!important}}
 
-/* feedback box */
-.fb-box{background:var(--s2);border-radius:12px;padding:16px;margin-top:14px;font-size:13px;line-height:1.75;color:var(--t)}
+.fb-box{background:var(--s2);border-radius:12px;padding:16px;margin-top:14px}
 .fb-item{display:flex;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--b)}
-.fb-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
-.fb-icon{font-size:20px;flex-shrink:0;margin-top:1px}
-.fb-text{}
-.fb-label{font-size:12px;font-weight:700;margin-bottom:3px}
-
-/* forgot pw screen */
-#forgot-wrap{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+.fb-item:last-child{border:none;margin:0;padding:0}
 </style>
 </head>
 <body class="light">
-
 <div id="toast"></div>
 <div id="sync"></div>
 
 <!-- FORGOT PASSWORD -->
 <div id="forgot-wrap">
-  <div class="auth-card">
-    <div class="auth-logo">🔑</div>
-    <div class="auth-h">Reset password</div>
-    <div class="auth-sub">Enter your email and we'll send a reset link.</div>
-    <div id="forgot-msg" style="display:none" class="auth-msg"></div>
-    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
-      <input type="email" id="forgot-email" placeholder="Email address" autocomplete="email"/>
+  <div class="acard">
+    <div style="font-size:36px;margin-bottom:8px">🔑</div>
+    <div class="ath">Reset password</div>
+    <div class="asub">Enter your email and we'll send a reset link.</div>
+    <div id="forgot-msg"></div>
+    <div style="margin-bottom:14px">
+      <input type="email" id="forgot-email" placeholder="Email address" autocomplete="email" style="font-size:16px"/>
     </div>
-    <button class="bp" id="forgot-btn" style="width:100%;padding:14px;font-size:15px" onclick="sendReset()">Send reset link</button>
-    <div class="forgot-link" onclick="showAuth()" style="margin-top:14px">← Back to login</div>
+    <button class="bp" id="forgot-btn" style="width:100%;padding:14px;font-size:16px" onclick="sendReset()">Send reset link</button>
+    <div class="flink" onclick="showAuth()" style="margin-top:14px">← Back to login</div>
   </div>
 </div>
 
 <!-- AUTH -->
 <div id="auth-wrap">
-  <div class="auth-card">
-    <div class="auth-logo">💸</div>
-    <div class="auth-h">Expense Tracker</div>
-    <div class="auth-sub">Track spending, set budgets, get insights — synced across all your devices.</div>
-    <div class="auth-tabs">
-      <button class="auth-tab on" id="atab-login" onclick="setAuthMode('login')">Login</button>
-      <button class="auth-tab" id="atab-signup" onclick="setAuthMode('signup')">Sign Up</button>
+  <div class="acard">
+    <div style="font-size:36px;margin-bottom:8px">💸</div>
+    <div class="ath">Expense Tracker</div>
+    <div class="asub">Track spending, set budgets, get insights — synced across all your devices.</div>
+    <div class="atabs">
+      <button class="atab on" id="atab-login" onclick="setAuthMode('login')">Login</button>
+      <button class="atab" id="atab-signup" onclick="setAuthMode('signup')">Sign Up</button>
     </div>
-    <div id="auth-msg" style="display:none" class="auth-msg err"></div>
-    <div class="auth-fields">
-      <input type="email" id="f-email" placeholder="Email address" autocomplete="email" inputmode="email"/>
-      <input type="password" id="f-pw" placeholder="Password" autocomplete="current-password"/>
-      <input type="password" id="f-pw2" placeholder="Confirm password" autocomplete="new-password" style="display:none"/>
+    <div id="auth-msg"></div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">
+      <input type="email" id="f-email" placeholder="Email address" autocomplete="email" style="font-size:16px"/>
+      <input type="password" id="f-pw" placeholder="Password" autocomplete="current-password" style="font-size:16px"/>
+      <input type="password" id="f-pw2" placeholder="Confirm password" autocomplete="new-password" style="display:none;font-size:16px"/>
     </div>
-    <button class="bp" id="auth-btn" style="width:100%;padding:14px;font-size:15px" onclick="authSubmit()">Login</button>
-    <div class="forgot-link" id="forgot-link" onclick="showForgot()">Forgot password?</div>
-    <div class="auth-or"><div class="auth-or-line"></div><div class="auth-or-text">or</div><div class="auth-or-line"></div></div>
+    <button class="bp" id="auth-btn" style="width:100%;padding:14px;font-size:16px" onclick="authSubmit()">Login</button>
+    <div class="flink" id="forgot-link" onclick="showForgot()">Forgot password?</div>
+    <div class="aor"><div class="aor-l"></div><span style="font-size:11px;color:var(--m)">or</span><div class="aor-l"></div></div>
     <button class="bgh" onclick="goOffline()" style="width:100%;padding:13px;font-size:14px">Continue offline (local only)</button>
   </div>
 </div>
@@ -186,26 +160,22 @@ body.dark .pill.on{background:#334155}
     <div id="hdr"></div>
     <div id="top-tabs" class="pill-bar" style="margin-bottom:18px;display:none"></div>
 
-    <!-- ADD TAB — always in DOM, never innerHTML -->
+    <!-- ADD TAB — permanently in DOM -->
     <div id="tab-add" style="display:none">
       <div class="card" style="padding:18px;margin-bottom:18px">
         <p style="font-weight:700;font-size:16px;margin-bottom:16px">New Expense</p>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div>
             <input type="text" id="i-desc" placeholder="What did you spend on? (e.g. Zomato)"
-              autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"
-              style="font-size:16px"/>
-            <div id="cat-preview" style="font-size:12px;font-weight:600;margin-top:6px;min-height:18px;color:var(--a)"></div>
+              autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" style="font-size:16px"/>
+            <div id="cat-preview" style="font-size:12px;font-weight:600;margin-top:6px;min-height:18px"></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <input type="number" id="i-amt" placeholder="Amount (₹)"
-              inputmode="decimal" min="0" step="any" style="font-size:16px"/>
+            <input type="number" id="i-amt" placeholder="Amount (₹)" inputmode="decimal" min="0" step="any" style="font-size:16px"/>
             <input type="date" id="i-date" style="font-size:16px"/>
           </div>
-          <select id="i-cat" style="font-size:16px">
-            <option value="">Auto-detect category</option>
-          </select>
-          <button class="bp" id="btn-add-exp" style="width:100%;padding:15px;font-size:16px">+ Add Expense</button>
+          <select id="i-cat" style="font-size:16px;background:var(--s2);color:var(--t)"></select>
+          <button class="bp" id="btn-add" style="width:100%;padding:15px;font-size:16px">+ Add Expense</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -215,14 +185,38 @@ body.dark .pill.on{background:#334155}
       <div class="card" style="overflow:hidden;padding:0" id="recent-list"></div>
     </div>
 
-    <!-- OTHER TABS rendered dynamically -->
-    <div id="content"></div>
+    <!-- BUDGETS TAB — permanently in DOM -->
+    <div id="tab-budgets" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <p style="font-size:13px;color:var(--m)">Edit amount then tap ✓</p>
+        <button class="bp" id="btn-newcat" style="font-size:13px;padding:10px 16px">+ New category</button>
+      </div>
+      <div id="newcat-form" style="display:none">
+        <div class="card" style="padding:18px;margin-bottom:14px;border-color:var(--a)">
+          <p style="font-weight:700;font-size:14px;color:var(--a);margin-bottom:14px">Add Custom Category</p>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <input type="text" id="i-newcat" placeholder="Category name" autocomplete="off" style="font-size:16px"/>
+            <div style="display:flex;gap:10px">
+              <input type="text" id="i-newicon" placeholder="Emoji" value="🏷" style="width:80px;text-align:center;font-size:20px"/>
+              <input type="color" id="i-newcolor" value="#6366F1" style="flex:1"/>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="bp" id="btn-addcat" style="flex:1">Add</button>
+              <button class="bgh" id="btn-cancelcat" style="flex:1">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="overflow:hidden;padding:0" id="bud-list"></div>
+    </div>
+
+    <!-- DYNAMIC TABS (Dashboard, Reports) -->
+    <div id="content" style="display:none"></div>
   </div>
   <nav id="bnav"></nav>
 </div>
 
 <script>
-// ── Supabase ──
 const {createClient}=supabase;
 const sb=createClient("https://bymzxsrlfirxynwidoyc.supabase.co","sb_publishable_SqZJ79X9qhfThpaWy8KXMw_glLvyx27");
 
@@ -247,12 +241,10 @@ let S={
   expenses:JSON.parse(localStorage.getItem("et_exp")||"[]"),
   cats:JSON.parse(localStorage.getItem("et_cats")||JSON.stringify(DC)),
   budgets:JSON.parse(localStorage.getItem("et_bud")||JSON.stringify(DB)),
-  editExp:null,editAmt:"",editBud:null,budInput:"",
-  showAddCat:false,newCat:{name:"",icon:"🏷",color:"#6366F1"},
   period:"monthly",
 };
 
-// ── Helpers ──
+// ── Utils ──
 const fmt=n=>"₹"+Math.round(n).toLocaleString("en-IN");
 const q=id=>document.getElementById(id);
 function categorize(desc){
@@ -273,13 +265,11 @@ const totalBudget=()=>Object.values(S.budgets).reduce((a,b)=>a+b,0);
 let toastTmr;
 function toast(msg){const el=q("toast");el.textContent=msg;el.classList.add("show");clearTimeout(toastTmr);toastTmr=setTimeout(()=>el.classList.remove("show"),2600);}
 
-function showSync(state){
-  const el=q("sync");
-  el.className="sync on "+state;
-  el.textContent=state==="saving"?"⏳ Saving":state==="saved"?"✓ Saved":"⚠ Sync error";
-  if(state==="saved")setTimeout(()=>{el.className="sync";},2200);
+function showSync(st){
+  const el=q("sync");el.className="sync on "+st;
+  el.textContent=st==="saving"?"⏳ Saving":st==="saved"?"✓ Saved":"⚠ Error";
+  if(st==="saved")setTimeout(()=>{el.className="sync";},2200);
 }
-
 function applyTheme(){document.body.className=S.dark?"dark":"light";}
 
 // ── Save ──
@@ -315,18 +305,14 @@ async function loadCloud(){
 let authMode="login";
 function setAuthMode(m){
   authMode=m;
-  q("atab-login").className="auth-tab"+(m==="login"?" on":"");
-  q("atab-signup").className="auth-tab"+(m==="signup"?" on":"");
+  q("atab-login").className="atab"+(m==="login"?" on":"");
+  q("atab-signup").className="atab"+(m==="signup"?" on":"");
   q("auth-btn").textContent=m==="login"?"Login":"Create Account";
   q("f-pw2").style.display=m==="signup"?"block":"none";
   q("forgot-link").style.display=m==="login"?"block":"none";
-  q("auth-msg").style.display="none";
-  if(m==="signup")q("f-pw").setAttribute("autocomplete","new-password");
-  else q("f-pw").setAttribute("autocomplete","current-password");
+  q("auth-msg").className="";q("auth-msg").textContent="";
 }
-function showAuthMsg(msg,type="err"){
-  const el=q("auth-msg");el.textContent=msg;el.className="auth-msg "+(type==="ok"?"ok":"err");el.style.display="block";
-}
+function showAuthMsg(msg,type="err"){const el=q("auth-msg");el.textContent=msg;el.className="amsg "+(type==="ok"?"ok":"err");}
 function showForgot(){q("auth-wrap").style.display="none";q("forgot-wrap").style.display="flex";}
 function showAuth(){q("forgot-wrap").style.display="none";q("auth-wrap").style.display="flex";}
 
@@ -341,7 +327,7 @@ async function authSubmit(){
     if(pw.length<6){showAuthMsg("Password must be at least 6 characters.");resetAuthBtn();return;}
     const{error}=await sb.auth.signUp({email,password:pw});
     if(error){showAuthMsg(error.message);resetAuthBtn();return;}
-    showAuthMsg("✓ Signup successful! Check your email to confirm, then login.","ok");
+    showAuthMsg("✓ Check your email to confirm, then login.","ok");
     setAuthMode("login");resetAuthBtn();return;
   }
   const{data,error}=await sb.auth.signInWithPassword({email,password:pw});
@@ -349,46 +335,56 @@ async function authSubmit(){
   user=data.user;await loadCloud();launch();
 }
 function resetAuthBtn(){const b=q("auth-btn");b.textContent=authMode==="login"?"Login":"Create Account";b.disabled=false;}
-
 function goOffline(){offline=true;user=null;launch();}
 
 async function sendReset(){
   const email=q("forgot-email").value.trim();
-  if(!email){q("forgot-msg").textContent="Enter your email.";q("forgot-msg").className="auth-msg err";q("forgot-msg").style.display="block";return;}
+  const msg=q("forgot-msg");
+  if(!email){msg.textContent="Enter your email.";msg.className="amsg err";return;}
   q("forgot-btn").textContent="Sending…";q("forgot-btn").disabled=true;
   const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
   q("forgot-btn").textContent="Send reset link";q("forgot-btn").disabled=false;
-  const msg=q("forgot-msg");
-  if(error){msg.textContent=error.message;msg.className="auth-msg err";}
-  else{msg.textContent="✓ Reset link sent! Check your inbox.";msg.className="auth-msg ok";}
-  msg.style.display="block";
+  if(error){msg.textContent=error.message;msg.className="amsg err";}
+  else{msg.textContent="✓ Reset link sent! Check your inbox.";msg.className="amsg ok";}
 }
 
 async function doLogout(){
   await sb.auth.signOut();user=null;offline=false;
   S.expenses=[];S.cats=JSON.parse(JSON.stringify(DC));S.budgets=JSON.parse(JSON.stringify(DB));
-  q("app-wrap").style.display="none";q("auth-wrap").style.display="flex";
+  q("app-wrap").style.display="none";
+  q("auth-wrap").style.display="flex";
   toast("Logged out.");
 }
 
+// ── Launch ──
 function launch(){
   q("auth-wrap").style.display="none";q("forgot-wrap").style.display="none";
   q("app-wrap").style.display="block";
   applyTheme();
-  // set today's date
   q("i-date").value=new Date().toISOString().slice(0,10);
-  // populate category select
+  setupAddTab();
+  setupBudgetsTab();
+  renderHeader();
+  renderNav();
+  setTab(0);
+}
+
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){user=session.user;await loadCloud();launch();}
+})();
+
+// ── Add Tab setup (wired once) ──
+function setupAddTab(){
   populateCatSelect();
-  // wire up persistent inputs
-  q("i-desc").addEventListener("input",()=>{
+  q("i-desc").oninput=()=>{
     const det=q("i-cat").value||categorize(q("i-desc").value||"x");
     const info=S.cats[det]||DC.Other;
     const prev=q("cat-preview");
     if(q("i-desc").value){prev.textContent=`→ ${det}`;prev.style.color=info.color;}
     else prev.textContent="";
-  });
-  q("btn-add-exp").addEventListener("click",addExpense);
-  render();
+  };
+  q("btn-add").onclick=addExpense;
 }
 
 function populateCatSelect(){
@@ -396,68 +392,17 @@ function populateCatSelect(){
   const cur=sel.value;
   sel.innerHTML=`<option value="">Auto-detect category</option>`+
     Object.entries(S.cats).map(([cat,ci])=>`<option value="${cat}">${ci.icon} ${cat}</option>`).join("");
-  sel.value=cur;
+  if(cur)sel.value=cur;
 }
 
-// session check on load
-(async()=>{
-  const{data:{session}}=await sb.auth.getSession();
-  if(session){user=session.user;await loadCloud();launch();}
-})();
-
-// ── Rule-based feedback engine ──
-function generateFeedback(){
-  const ct=catTotals();const ts=totalSpend();const tb=totalBudget();
-  const items=[];
-  const pct=tb>0?Math.round((ts/tb)*100):0;
-
-  // overall health
-  if(pct===0){items.push({icon:"👋",label:"No data yet",text:"Add some expenses to get personalised feedback on your spending."});return items;}
-  if(pct<60)items.push({icon:"🟢",label:"Great overall",text:`You've used ${pct}% of your total budget — you're well in control. Keep it up!`});
-  else if(pct<85)items.push({icon:"🟡",label:"Doing okay",text:`You're at ${pct}% of your total budget. A few categories need attention before month-end.`});
-  else if(pct<100)items.push({icon:"🟠",label:"Getting close",text:`You've used ${pct}% of your total budget. Time to pull back on discretionary spending.`});
-  else items.push({icon:"🔴",label:"Over budget",text:`You've exceeded your total budget by ₹${fmt(ts-tb).replace("₹","")}. Review your biggest categories immediately.`});
-
-  // per-category
-  const over=[];const near=[];const good=[];
-  for(const[cat,spent]of Object.entries(ct)){
-    const bud=S.budgets[cat]||0;if(!bud)continue;
-    const p=Math.round((spent/bud)*100);
-    if(p>100)over.push({cat,spent,bud,p});
-    else if(p>75)near.push({cat,spent,bud,p});
-    else good.push({cat,spent,bud,p});
-  }
-
-  if(over.length){
-    over.sort((a,b)=>b.p-a.p);
-    const top=over[0];
-    const tips={Food:"Try cooking at home 2–3 days a week or switching to weekly BigBasket orders instead of daily Blinkit runs.",Transport:"Consider using the metro or sharing rides — Rapido bike taxis can cut costs significantly.",Entertainment:"Review your active OTT subscriptions — rotate between Netflix, Prime, and Hotstar instead of keeping all active.",Shopping:"Try a 24-hour rule before buying — if you still want it tomorrow, then buy it.",Health:"Compare prices on 1mg vs Apollo Pharmacy for medicines — savings can be 20–30%.",Utilities:"Check for bill payment cashback offers on PhonePe or GPay — easy savings on fixed costs.",Education:"Look for coupon codes on Udemy — courses frequently go on sale for ₹399–499.",Other:"Review this category and see if any items belong to a specific category."};
-    items.push({icon:"🚨",label:`${top.cat} is over budget (${top.p}%)`,text:`You've spent ${fmt(top.spent)} against a budget of ${fmt(top.bud)}. ${tips[top.cat]||"Consider reducing spend in this category."}`});
-    if(over.length>1)items.push({icon:"⚠️",label:`${over.length-1} more over budget`,text:over.slice(1).map(o=>`${o.cat}: ${fmt(o.spent)} / ${fmt(o.bud)} (${o.p}%)`).join(" · ")});
-  }
-
-  if(near.length){
-    items.push({icon:"🔔",label:"Nearing limit",text:near.map(n=>`${n.cat} is at ${n.p}% (${fmt(n.spent)} of ${fmt(n.bud)})`).join(". ")+". Slow down spending here to finish the month comfortably."});
-  }
-
-  if(good.length>=2){
-    const best=good.sort((a,b)=>a.p-b.p)[0];
-    items.push({icon:"✅",label:`${best.cat} looks great`,text:`Only ${fmt(best.spent)} spent — ${best.p}% of your ${fmt(best.bud)} budget. Well managed!`});
-  }
-
-  // biggest expense category
-  const sorted=Object.entries(ct).sort((a,b)=>b[1]-a[1]);
-  if(sorted.length&&ts>0){
-    const[topCat,topAmt]=sorted[0];
-    const share=Math.round((topAmt/ts)*100);
-    if(share>40)items.push({icon:"📌",label:`${topCat} dominates spending`,text:`${topCat} accounts for ${share}% of your total spend (${fmt(topAmt)}). Consider if this aligns with your priorities.`});
-  }
-
-  // savings tip
-  const saved=tb-ts;
-  if(saved>0)items.push({icon:"💡",label:"Savings tip",text:`You have ${fmt(saved)} left in your budget. Consider moving a portion to savings or an emergency fund — even ₹500/month adds up.`});
-
-  return items;
+// ── Budgets Tab setup (wired once, list re-rendered) ──
+function setupBudgetsTab(){
+  q("btn-newcat").onclick=()=>{
+    const f=q("newcat-form");
+    f.style.display=f.style.display==="none"?"block":"none";
+  };
+  q("btn-addcat").onclick=addCat;
+  q("btn-cancelcat").onclick=()=>{q("newcat-form").style.display="none";};
 }
 
 // ── Actions ──
@@ -469,59 +414,81 @@ function addExpense(){
   if(!desc||isNaN(amt)||amt<=0){toast("Enter a valid description and amount.");return;}
   S.expenses.unshift({id:Date.now(),desc,amount:amt,date,cat});
   dsave();
-  q("i-desc").value="";q("i-amt").value="";q("i-cat").value="";
-  q("cat-preview").textContent="";
+  q("i-desc").value="";q("i-amt").value="";q("i-cat").value="";q("cat-preview").textContent="";
   toast(`Added to ${cat}!`);
-  // re-render recent list only
   renderRecentList();
+  q("exp-count").textContent=S.expenses.length+" total";
 }
 
-function delExp(id){S.expenses=S.expenses.filter(e=>e.id!=id);dsave();renderRecentList();}
+function delExp(id){
+  S.expenses=S.expenses.filter(e=>e.id!=id);
+  dsave();renderRecentList();
+  q("exp-count").textContent=S.expenses.length+" total";
+}
 
-function startEditExp(id,amt){
-  S.editExp=id;S.editAmt=amt;
-  // replace row inline
-  const row=document.querySelector(`[data-expid="${id}"]`);
-  if(!row)return;
-  const ci=S.cats[S.expenses.find(e=>e.id==id)?.cat]||DC.Other;
+function startEditExp(id){
+  const exp=S.expenses.find(e=>e.id==id);if(!exp)return;
+  const row=document.querySelector(`[data-id="${id}"]`);if(!row)return;
+  const ci=S.cats[exp.cat]||DC.Other;
   row.innerHTML=`
     <div class="tile" style="background:${S.dark?ci.dark:ci.light}">${ci.icon}</div>
-    <div style="flex:1;min-width:0">
-      <input type="number" value="${amt}" id="inline-amt" style="font-size:15px;padding:8px 10px"
-        onkeydown="if(event.key==='Enter')saveEditAmt(${id})"/>
+    <div style="flex:1;min-width:0;padding-right:8px">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${exp.desc}</div>
+      <input type="number" inputmode="decimal" value="${exp.amount}" id="edit-amt-${id}"
+        style="font-size:16px;padding:10px 12px;width:100%"/>
     </div>
-    <button class="bg" onclick="saveEditAmt(${id})" style="padding:8px 12px">✓</button>
-    <button class="bgh" onclick="cancelEdit()" style="padding:8px 10px">✕</button>`;
-  setTimeout(()=>{const el=q("inline-amt");if(el){el.focus();el.select();}},50);
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="bg" onclick="saveEditAmt(${id})" style="padding:10px 12px">✓</button>
+      <button class="bgh" onclick="renderRecentList()" style="padding:10px 12px">✕</button>
+    </div>`;
+  setTimeout(()=>{const el=q(`edit-amt-${id}`);if(el){el.focus();el.select();}},50);
 }
 
 function saveEditAmt(id){
-  const el=q("inline-amt");if(!el)return;
+  const el=q(`edit-amt-${id}`);if(!el)return;
   const v=parseFloat(el.value);
   if(isNaN(v)||v<=0){toast("Invalid amount");return;}
   S.expenses=S.expenses.map(e=>e.id==id?{...e,amount:v}:e);
-  S.editExp=null;dsave();renderRecentList();toast("Updated!");
+  dsave();renderRecentList();toast("Updated!");
 }
-function cancelEdit(){S.editExp=null;renderRecentList();}
 
-function saveEditBud(cat){
-  const el=q("bud-input-"+cat);if(!el)return;
-  const v=parseFloat(el.value);if(isNaN(v)||v<0){toast("Invalid");return;}
-  S.budgets[cat]=v;dsave();renderBudgetList();toast("Budget updated!");
+function saveBudget(cat){
+  const el=q(`bud-${CSS.escape(cat)}`);if(!el)return;
+  const v=parseFloat(el.value);
+  if(isNaN(v)||v<0){toast("Enter a valid amount");return;}
+  S.budgets[cat]=v;
+  dsave();toast(`${cat} budget updated!`);
+  // re-render dashboard bars if visible
+  if(S.tab===1)renderDynamic();
 }
 
 function addCat(){
-  const name=q("i-newcat").value.trim();if(!name){toast("Enter a name");return;}
-  S.cats[name]={kw:[],color:q("i-newcolor").value,light:"#F5F3FF",dark:"#2D1B69",icon:q("i-newicon").value||"🏷"};
-  S.budgets[name]=2000;dsave();S.showAddCat=false;render();toast(`"${name}" added!`);
+  const name=q("i-newcat").value.trim();
+  if(!name){toast("Enter a category name");return;}
+  const color=q("i-newcolor").value;
+  const icon=q("i-newicon").value||"🏷";
+  S.cats[name]={kw:[],color,light:"#F5F3FF",dark:"#2D1B69",icon};
+  S.budgets[name]=2000;
+  dsave();
+  q("i-newcat").value="";q("i-newicon").value="🏷";
+  q("newcat-form").style.display="none";
+  populateCatSelect();
+  renderBudgetList();
+  toast(`"${name}" added!`);
 }
 
 function downloadExcel(){
   if(!S.expenses.length){toast("No expenses to export");return;}
   const ct=catTotals();const ts=totalSpend();
-  const rows=[["Date","Description","Category","Amount (INR)"].join("\t"),...S.expenses.map(e=>[e.date,e.desc,e.cat,e.amount].join("\t")),"","Category Summary",["Category","","","Total"].join("\t"),...Object.entries(ct).map(([c,a])=>[c,"","",a].join("\t")),"",["","","Grand Total",ts].join("\t")].join("\n");
+  const rows=[["Date","Description","Category","Amount (INR)"].join("\t"),
+    ...S.expenses.map(e=>[e.date,e.desc,e.cat,e.amount].join("\t")),
+    "","Category Summary",["Category","","","Total"].join("\t"),
+    ...Object.entries(ct).map(([c,a])=>[c,"","",a].join("\t")),
+    "",["","","Grand Total",ts].join("\t")].join("\n");
   const blob=new Blob(["\uFEFF"+rows],{type:"application/vnd.ms-excel;charset=utf-8"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`expenses_${new Date().toISOString().slice(0,10)}.xls`;a.click();toast("Downloading!");
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download=`expenses_${new Date().toISOString().slice(0,10)}.xls`;a.click();
+  toast("Downloading!");
 }
 
 function importFile(input){
@@ -537,123 +504,144 @@ function importFile(input){
       }).filter(Boolean);
       if(!data.length){toast("No valid data found");return;}
       const merged=[...data,...S.expenses].filter((e,i,arr)=>arr.findIndex(x=>x.date===e.date&&x.desc===e.desc&&x.amount===e.amount)===i);
-      S.expenses=merged;dsave();render();toast(`Imported ${data.length} expenses!`);
+      S.expenses=merged;dsave();
+      if(S.tab===0)renderRecentList();
+      else renderDynamic();
+      toast(`Imported ${data.length} expenses!`);
     }catch{toast("Failed to parse file.");}
     input.value="";
   };
   reader.readAsText(file);
 }
 
-// ── Partial renders (for performance on mobile) ──
-function renderRecentList(){
-  const el=q("recent-list");if(!el)return;
-  if(!S.expenses.length){el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--m);font-size:14px">No expenses yet 🎉<br/><span style="font-size:12px">Add your first one above</span></div>`;return;}
-  el.innerHTML=S.expenses.slice(0,30).map((e,i,arr)=>{
-    const ci=S.cats[e.cat]||DC.Other;
-    return`<div class="row" data-expid="${e.id}" style="${i<arr.length-1?"border-bottom:1px solid var(--b)":""}">
-      <div class="tile" style="background:${S.dark?ci.dark:ci.light}">${ci.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.desc}</div>
-        <div style="font-size:11px;color:var(--m)">${e.cat} · ${e.date}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span style="font-weight:700;font-size:14px;color:${ci.color}">${fmt(e.amount)}</span>
-        <button onclick="startEditExp(${e.id},${e.amount})" style="background:${S.dark?"#1E3A6E":"#EFF6FF"};color:#3B82F6;padding:6px 10px;font-size:12px;border-radius:8px">Edit</button>
-        <button onclick="delExp(${e.id})" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--r);padding:6px 10px;font-size:12px;border-radius:8px">Del</button>
-      </div>
-    </div>`;
-  }).join("");
+// ── Feedback engine ──
+function generateFeedback(){
+  const ct=catTotals();const ts=totalSpend();const tb=totalBudget();
+  const items=[];
+  const pct=tb>0?Math.round((ts/tb)*100):0;
+  if(pct===0){items.push({icon:"👋",label:"No data yet",text:"Add some expenses to get personalised feedback on your spending."});return items;}
+  if(pct<60)items.push({icon:"🟢",label:"Great overall",text:`You've used ${pct}% of your total budget — you're well in control. Keep it up!`});
+  else if(pct<85)items.push({icon:"🟡",label:"Doing okay",text:`You're at ${pct}% of your total budget. A few categories need attention before month-end.`});
+  else if(pct<100)items.push({icon:"🟠",label:"Getting close",text:`You've used ${pct}% of your total budget. Time to pull back on discretionary spending.`});
+  else items.push({icon:"🔴",label:"Over budget",text:`You've exceeded your total budget by ${fmt(ts-tb)}. Review your biggest categories immediately.`});
+  const tips={Food:"Try cooking at home 2–3 days a week or switching to weekly BigBasket orders instead of daily Blinkit runs.",Transport:"Consider the metro or sharing rides — Rapido bike taxis can cut costs significantly.",Entertainment:"Rotate OTT subscriptions instead of keeping all active simultaneously.",Shopping:"Try a 24-hour rule before buying — if you still want it tomorrow, then buy.",Health:"Compare prices on 1mg vs Apollo Pharmacy — savings can be 20–30%.",Utilities:"Use PhonePe or GPay cashback offers for bill payments.",Education:"Udemy courses go on sale frequently for ₹399–499 — wait for a deal.",Other:"Review if any items here belong to a specific category."};
+  const over=[],near=[];
+  for(const[cat,spent]of Object.entries(ct)){
+    const bud=S.budgets[cat]||0;if(!bud)continue;
+    const p=Math.round((spent/bud)*100);
+    if(p>100)over.push({cat,spent,bud,p});
+    else if(p>75)near.push({cat,spent,bud,p});
+  }
+  over.sort((a,b)=>b.p-a.p);
+  if(over.length){
+    const top=over[0];
+    items.push({icon:"🚨",label:`${top.cat} is over budget (${top.p}%)`,text:`Spent ${fmt(top.spent)} against budget of ${fmt(top.bud)}. ${tips[top.cat]||"Consider reducing spend here."}`});
+    if(over.length>1)items.push({icon:"⚠️",label:`${over.length-1} more over budget`,text:over.slice(1).map(o=>`${o.cat}: ${fmt(o.spent)} / ${fmt(o.bud)}`).join(" · ")});
+  }
+  if(near.length)items.push({icon:"🔔",label:"Nearing limit",text:near.map(n=>`${n.cat} at ${n.p}%`).join(", ")+". Slow down here to finish the month comfortably."});
+  const sorted=Object.entries(ct).sort((a,b)=>b[1]-a[1]);
+  if(sorted.length&&ts>0){const[tc,ta]=sorted[0];const share=Math.round((ta/ts)*100);if(share>40)items.push({icon:"📌",label:`${tc} dominates (${share}% of total)`,text:`${fmt(ta)} spent on ${tc}. Consider if this matches your priorities.`});}
+  const saved=tb-ts;
+  if(saved>0)items.push({icon:"💡",label:"Savings opportunity",text:`${fmt(saved)} remains in your budget. Consider moving a portion to savings — even ₹500/month adds up over time.`});
+  return items;
 }
 
-function renderBudgetList(){
-  const el=q("bud-list");if(!el)return;
-  const ct=catTotals();
-  el.innerHTML=Object.entries(S.cats).map(([cat,ci],i,arr)=>{
-    const budget=S.budgets[cat]||0;const spent=ct[cat]||0;const over=spent>budget&&budget>0;
-    return`<div class="row" style="${i<arr.length-1?"border-bottom:1px solid var(--b)":""}">
-      <div class="tile" style="background:${S.dark?ci.dark:ci.light}">${ci.icon}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:600;font-size:13px">${cat}</div>
-        <div style="font-size:12px;color:${over?"var(--r)":"var(--m)"}">Spent: ${fmt(spent)}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        ${over?`<span class="badge" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--r)">over!</span>`:""}
-        <input type="number" id="bud-input-${cat}" value="${budget}" style="width:90px;font-size:14px;padding:8px 10px;text-align:right"
-          onkeydown="if(event.key==='Enter')saveEditBud('${cat}')"/>
-        <button class="bg" onclick="saveEditBud('${cat}')" style="padding:8px 12px;font-size:13px">✓</button>
-      </div>
-    </div>`;
-  }).join("");
-}
-
-// ── Full render ──
-function render(){
-  applyTheme();
+// ── Render: header & nav (lightweight, no tab flash) ──
+function renderHeader(){
   const ts=totalSpend();const tb=totalBudget();
-  const userLabel=offline?"⚡ Offline":(user?.email?`☁ ${user.email}`:"");
-
+  const ul=offline?"⚡ Offline":(user?.email?`☁ ${user.email}`:"");
   q("hdr").innerHTML=`
   <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
     <div>
       <h1 style="font-size:21px;font-weight:800;letter-spacing:-.5px">Expense Tracker</h1>
       <p style="font-size:12px;color:var(--m);margin-top:3px">
-        ${userLabel?`<span style="background:${offline?"#FFFBEB":"#ECFDF5"};color:${offline?"#6B3A00":"#065F46"};border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700">${userLabel}</span> · `:""}${fmt(ts)} spent · ${fmt(Math.max(0,tb-ts))} left
+        ${ul?`<span style="background:${offline?"#FFFBEB":"#ECFDF5"};color:${offline?"#6B3A00":"#065F46"};border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700">${ul}</span> · `:""}${fmt(ts)} spent · ${fmt(Math.max(0,tb-ts))} left
       </p>
     </div>
     <div style="display:flex;gap:8px">
-      <button onclick="S.dark=!S.dark;dsave();applyTheme();" style="background:var(--s2);color:var(--t);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:13px">${S.dark?"☀":"🌙"}</button>
+      <button id="dark-btn" onclick="S.dark=!S.dark;dsave();applyTheme();q('dark-btn').textContent=S.dark?'☀':'🌙'" style="background:var(--s2);color:var(--t);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:14px">${S.dark?"☀":"🌙"}</button>
       ${!offline&&user?`<button onclick="doLogout()" style="background:var(--s2);color:var(--m);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:13px">Logout</button>`:""}
     </div>
   </div>`;
-
-  const tt=q("top-tabs");
-  if(tt)tt.innerHTML=TABS.map((t,i)=>`<button class="pill ${S.tab===i?"on":""}" onclick="setTab(${i})">${t.i} ${t.l}</button>`).join("");
-
-  q("bnav").innerHTML=TABS.map((t,i)=>`<button class="${S.tab===i?"on":""}" onclick="setTab(${i})"><span class="ni">${t.i}</span>${t.l}</button>`).join("");
-
-  // show/hide tabs
-  q("tab-add").style.display=S.tab===0?"block":"none";
-  q("content").style.display=S.tab===0?"none":"block";
-
-  if(S.tab===0){
-    renderRecentList();
-    q("exp-count").textContent=S.expenses.length+" total";
-    populateCatSelect();
-  } else {
-    const renders=[null,renderDashboard,renderReports,renderBudgets];
-    q("content").innerHTML=renders[S.tab]();
-    if(S.tab===3)renderBudgetList();
-  }
 }
 
-function setTab(i){S.tab=i;render();}
+function renderNav(){
+  const tt=q("top-tabs");
+  if(tt)tt.innerHTML=TABS.map((t,i)=>`<button class="pill ${S.tab===i?"on":""}" onclick="setTab(${i})">${t.i} ${t.l}</button>`).join("");
+  q("bnav").innerHTML=TABS.map((t,i)=>`<button class="${S.tab===i?"on":""}" onclick="setTab(${i})"><span class="ni">${t.i}</span>${t.l}</button>`).join("");
+}
 
-function renderAdd(){
-  const today=new Date().toISOString().slice(0,10);
-  return`
-  <div class="card" style="padding:18px;margin-bottom:18px">
-    <p style="font-weight:700;font-size:16px;margin-bottom:16px">New Expense</p>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      <div>
-        <input type="text" id="i-desc" placeholder="What did you spend on? (e.g. Zomato)" autocomplete="off" autocorrect="off" spellcheck="false"/>
-        <div id="cat-preview" style="font-size:12px;font-weight:600;margin-top:6px;min-height:18px"></div>
+function setTab(i){
+  S.tab=i;
+  renderHeader();
+  renderNav();
+  // show/hide permanent tabs
+  q("tab-add").style.display=i===0?"block":"none";
+  q("tab-budgets").style.display=i===3?"block":"none";
+  q("content").style.display=(i===1||i===2)?"block":"none";
+  if(i===0){renderRecentList();q("exp-count").textContent=S.expenses.length+" total";}
+  if(i===1||i===2)renderDynamic();
+  if(i===3)renderBudgetList();
+}
+
+// ── Render: recent expenses list ──
+function renderRecentList(){
+  const el=q("recent-list");if(!el)return;
+  if(!S.expenses.length){
+    el.innerHTML=`<div style="padding:28px;text-align:center;color:var(--m);font-size:14px">No expenses yet 🎉<br/><span style="font-size:12px;margin-top:4px;display:block">Add your first one above</span></div>`;
+    return;
+  }
+  el.innerHTML=S.expenses.slice(0,30).map((e,i,arr)=>{
+    const ci=S.cats[e.cat]||DC.Other;
+    return`<div class="row" data-id="${e.id}" style="${i<arr.length-1?"border-bottom:1px solid var(--b)":""}">
+      <div class="tile" style="background:${S.dark?ci.dark:ci.light}">${ci.icon}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.desc}</div>
+        <div style="font-size:11px;color:var(--m)">${e.cat} · ${e.date}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <input type="number" id="i-amt" placeholder="Amount (₹)" inputmode="decimal" min="0" step="any"/>
-        <input type="date" id="i-date" value="${today}"/>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <span style="font-weight:700;font-size:14px;color:${ci.color}">${fmt(e.amount)}</span>
+        <button onclick="startEditExp(${e.id})" style="background:${S.dark?"#1E3A6E":"#EFF6FF"};color:#3B82F6;padding:7px 10px;font-size:12px;border-radius:8px;border:none">Edit</button>
+        <button onclick="delExp(${e.id})" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--r);padding:7px 10px;font-size:12px;border-radius:8px;border:none">Del</button>
       </div>
-      <select id="i-cat">
-        <option value="">Auto-detect category</option>
-        ${Object.entries(S.cats).map(([cat,ci])=>`<option value="${cat}">${ci.icon} ${cat}</option>`).join("")}
-      </select>
-      <button class="bp" onclick="addExpense()" style="width:100%;padding:14px;font-size:15px">+ Add Expense</button>
-    </div>
-  </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-    <p style="font-weight:700;font-size:15px">Recent Expenses</p>
-    <span style="font-size:12px;color:var(--m)">${S.expenses.length} total</span>
-  </div>
-  <div class="card" style="overflow:hidden;padding:0" id="recent-list"></div>`;
+    </div>`;
+  }).join("");
+}
+
+// ── Render: budget list (permanent DOM, inputs always present) ──
+function renderBudgetList(){
+  const el=q("bud-list");if(!el)return;
+  const ct=catTotals();
+  el.innerHTML=Object.entries(S.cats).map(([cat,ci],i,arr)=>{
+    const budget=S.budgets[cat]||0;
+    const spent=ct[cat]||0;
+    const over=spent>budget&&budget>0;
+    const warn=!over&&budget>0&&(spent/budget)>0.75;
+    // use CSS.escape-safe id: replace spaces/special chars
+    const safeId=`bud-${cat.replace(/[^a-zA-Z0-9]/g,"-")}`;
+    return`<div class="row" style="${i<arr.length-1?"border-bottom:1px solid var(--b)":""}">
+      <div class="tile" style="background:${S.dark?ci.dark:ci.light}">${ci.icon}</div>
+      <div style="flex:1;min-width:0;padding-right:8px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:2px">${cat}</div>
+        <div style="font-size:12px;color:${over?"var(--r)":warn?"var(--y)":"var(--m)"}">
+          Spent: ${fmt(spent)} ${over?"🔴 over":warn?"🟡 near":""}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <input type="number" id="${safeId}" inputmode="decimal"
+          value="${budget}" min="0" step="100"
+          style="width:90px;font-size:16px;padding:9px 10px;text-align:right"
+          onkeydown="if(event.key==='Enter')saveBudget('${cat}')"/>
+        <button class="bg" onclick="saveBudget('${cat}')" style="padding:10px 12px;font-size:15px;border-radius:10px">✓</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ── Render: dynamic content (dashboard & reports) ──
+function renderDynamic(){
+  if(S.tab===1)q("content").innerHTML=renderDashboard();
+  if(S.tab===2)q("content").innerHTML=renderReports();
 }
 
 function renderDashboard(){
@@ -661,7 +649,11 @@ function renderDashboard(){
   const fb=generateFeedback();
   return`
   <div class="sgrid">
-    ${[["Total Spent",fmt(ts),"#6366F1"],["Budget Left",fmt(Math.max(0,tb-ts)),"#10B981"],["Entries",S.expenses.length,"#F59E0B"]].map(([l,v,c])=>`<div class="card scard"><div style="font-size:11px;color:var(--m);margin-bottom:4px">${l}</div><div style="font-size:20px;font-weight:800;color:${c}">${v}</div></div>`).join("")}
+    ${[["Total Spent",fmt(ts),"#6366F1"],["Budget Left",fmt(Math.max(0,tb-ts)),"#10B981"],["Entries",S.expenses.length,"#F59E0B"]].map(([l,v,c])=>`
+    <div class="card" style="text-align:center;padding:14px 8px">
+      <div style="font-size:11px;color:var(--m);margin-bottom:4px">${l}</div>
+      <div style="font-size:20px;font-weight:800;color:${c}">${v}</div>
+    </div>`).join("")}
   </div>
   <p style="font-weight:700;font-size:15px;margin-bottom:10px">By Category</p>
   <div class="card" style="overflow:hidden;padding:0;margin-bottom:20px">
@@ -690,11 +682,12 @@ function renderDashboard(){
   </div>
   <div class="card" style="padding:18px;background:${S.dark?"#1A1040":"#F5F3FF"};border-color:${S.dark?"#3B2A80":"#C4B5FD"}">
     <p style="font-weight:800;font-size:15px;color:${S.dark?"#C4B5FD":"#4C1D95"}">💡 Spending Insights</p>
-    <p style="font-size:12px;color:${S.dark?"#A78BFA":"#7C3AED"};margin:3px 0 14px">Based on your actual spending this month</p>
+    <p style="font-size:12px;color:${S.dark?"#A78BFA":"#7C3AED"};margin:3px 0 14px">Based on your actual spending</p>
     <div class="fb-box" style="background:${S.dark?"#0F0A2A":"#EDE9FE"}">
       ${fb.map(f=>`<div class="fb-item">
-        <div class="fb-icon">${f.icon}</div>
-        <div class="fb-text"><div class="fb-label" style="color:${S.dark?"#C4B5FD":"#4C1D95"}">${f.label}</div><div style="font-size:12.5px;color:${S.dark?"#DDD6FE":"#3730A3"};line-height:1.6">${f.text}</div></div>
+        <div style="font-size:22px;flex-shrink:0;margin-top:1px">${f.icon}</div>
+        <div><div style="font-size:12px;font-weight:700;color:${S.dark?"#C4B5FD":"#4C1D95"};margin-bottom:3px">${f.label}</div>
+        <div style="font-size:12.5px;color:${S.dark?"#DDD6FE":"#3730A3"};line-height:1.6">${f.text}</div></div>
       </div>`).join("")}
     </div>
   </div>`;
@@ -706,10 +699,12 @@ function renderReports(){
   return`
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap">
     <div class="pill-bar" style="flex:1">
-      ${["weekly","monthly","quarterly","yearly"].map(p=>`<button class="pill ${S.period===p?"on":""}" onclick="S.period='${p}';render()">${p.charAt(0).toUpperCase()+p.slice(1)}</button>`).join("")}
+      ${["weekly","monthly","quarterly","yearly"].map(p=>`<button class="pill ${S.period===p?"on":""}" onclick="S.period='${p}';renderDynamic()">${p.charAt(0).toUpperCase()+p.slice(1)}</button>`).join("")}
     </div>
     <div style="display:flex;gap:8px;flex-shrink:0">
-      <label class="bp" style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:10px 14px;font-size:13px;border-radius:12px;font-weight:600">⬆<input type="file" accept=".xls,.xlsx,.csv,.tsv" onchange="importFile(this)"/></label>
+      <label class="bp" style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:10px 14px;font-size:13px;border-radius:12px;font-weight:600">
+        ⬆ Import<input type="file" accept=".xls,.xlsx,.csv,.tsv" onchange="importFile(this)"/>
+      </label>
       <button class="bg" onclick="downloadExcel()" style="padding:10px 14px;font-size:13px">⬇ Export</button>
     </div>
   </div>
@@ -724,40 +719,17 @@ function renderReports(){
       ${Object.entries(data).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{
         const ci=S.cats[cat]||DC.Other;const pct=Math.round((amt/total)*100);
         return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <span style="font-size:20px;width:26px;text-align:center;flex-shrink:0">${ci.icon}</span>
+          <span style="font-size:18px;width:24px;text-align:center;flex-shrink:0">${ci.icon}</span>
           <span style="font-size:13px;width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${cat}</span>
           <div class="bwrap" style="flex:1"><div class="bfill" style="width:${pct}%;background:${ci.color}"></div></div>
-          <span style="font-size:12px;color:var(--m);flex-shrink:0;min-width:95px;text-align:right">${fmt(amt)} (${pct}%)</span>
+          <span style="font-size:12px;color:var(--m);flex-shrink:0;min-width:90px;text-align:right">${fmt(amt)} (${pct}%)</span>
         </div>`;
       }).join("")}
     </div>`;
   }).join("")}`;
 }
 
-function renderBudgets(){
-  return`
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-    <p style="font-size:13px;color:var(--m)">Tap ✓ after editing to save</p>
-    <button class="bp" onclick="S.showAddCat=!S.showAddCat;render()" style="font-size:13px;padding:10px 16px">+ New category</button>
-  </div>
-  ${S.showAddCat?`<div class="card" style="padding:18px;margin-bottom:14px;border-color:var(--a)">
-    <p style="font-weight:700;font-size:14px;color:var(--a);margin-bottom:14px">Add Custom Category</p>
-    <div style="display:flex;flex-direction:column;gap:10px">
-      <input type="text" id="i-newcat" placeholder="Category name" autocomplete="off"/>
-      <div style="display:flex;gap:10px">
-        <input type="text" id="i-newicon" placeholder="Icon emoji" value="🏷" style="width:80px;text-align:center;font-size:20px"/>
-        <input type="color" id="i-newcolor" value="#6366F1" style="flex:1"/>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="bp" onclick="addCat()" style="flex:1">Add</button>
-        <button class="bgh" onclick="S.showAddCat=false;render()" style="flex:1">Cancel</button>
-      </div>
-    </div>
-  </div>`:""}
-  <div class="card" style="overflow:hidden;padding:0" id="bud-list"></div>`;
-}
-
-window.addEventListener("resize",()=>{render();});
+function render(){setTab(S.tab);}
 </script>
 </body>
 </html>
