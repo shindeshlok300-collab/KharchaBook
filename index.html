@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Expenses"/>
 <meta name="theme-color" content="#6366F1"/>
+<meta name="description" content="Smart personal expense tracker with cloud sync"/>
+<link rel="manifest" id="pwa-manifest"/>
 <title>Smart Expense Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -16,48 +18,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-heig
 body.light{--bg:#F8FAFC;--s:#fff;--s2:#F1F5F9;--b:rgba(0,0,0,0.08);--t:#0F172A;--m:#64748B}
 body.dark{--bg:#0F172A;--s:#1E293B;--s2:#263045;--b:rgba(255,255,255,0.08);--t:#F1F5F9;--m:#94A3B8}
 body{background:var(--bg);color:var(--t)}
-
-input,select,textarea{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:16px;
-  color:var(--t);
-  background:var(--s2);
-  border:1px solid var(--b);
-  border-radius:12px;
-  padding:13px 14px;
-  width:100%;
-  display:block;
-  -webkit-appearance:none;
-  appearance:none;
-  outline:none;
-  touch-action:manipulation;
-  -webkit-user-select:text;
-  user-select:text;
-}
-input:focus,select:focus,textarea:focus{border-color:var(--a);background:var(--s);outline:none}
+input,select,textarea{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:16px;color:var(--t);background:var(--s2);border:1px solid var(--b);border-radius:12px;padding:13px 14px;width:100%;display:block;-webkit-appearance:none;appearance:none;outline:none;touch-action:manipulation;-webkit-user-select:text;user-select:text}
+input:focus,select:focus{border-color:var(--a);background:var(--s)}
 input[type=color]{padding:4px;height:46px;cursor:pointer}
 input[type=file]{display:none}
-input[type=date]{-webkit-appearance:none;appearance:none}
+input[type=date]{-webkit-appearance:none}
 input[type=number]{-moz-appearance:textfield}
-input[type=number]::-webkit-outer-spin-button,
-input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
-
-button{
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:14px;font-weight:600;
-  border:none;border-radius:12px;
-  padding:13px 18px;cursor:pointer;
-  touch-action:manipulation;
-  -webkit-tap-highlight-color:transparent;
-  transition:opacity .15s;
-  -webkit-appearance:none;
-}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+button{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;font-weight:600;border:none;border-radius:12px;padding:13px 18px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-appearance:none;transition:opacity .15s}
 button:active{opacity:.75}
 .bp{background:var(--a);color:#fff}
 .bg{background:var(--g);color:#fff}
 .br{background:var(--r);color:#fff}
 .bgh{background:var(--s2);color:var(--m);border:1px solid var(--b)}
-
 .card{background:var(--s);border:1px solid var(--b);border-radius:var(--rad)}
 .row{display:flex;align-items:center;gap:12px;padding:13px 16px}
 .badge{border-radius:999px;padding:3px 9px;font-size:11px;font-weight:700}
@@ -66,12 +39,10 @@ button:active{opacity:.75}
 .pill{background:transparent;color:var(--m);border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;border:none;cursor:pointer;white-space:nowrap;touch-action:manipulation}
 .pill.on{background:#1E293B;color:#fff;font-weight:700}
 body.dark .pill.on{background:#334155}
-
 .tile{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .bwrap{height:8px;background:var(--s2);border-radius:4px;overflow:hidden;margin-top:6px}
 .bfill{height:100%;border-radius:4px}
 .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-
 #toast{position:fixed;top:max(env(safe-area-inset-top),16px);left:50%;transform:translateX(-50%);background:#1E293B;color:#fff;border-radius:999px;padding:10px 22px;font-size:13px;font-weight:600;z-index:9999;white-space:nowrap;box-shadow:0 4px 24px rgba(0,0,0,.25);opacity:0;transition:opacity .25s;pointer-events:none}
 #toast.show{opacity:1}
 #sync{position:fixed;top:max(env(safe-area-inset-top),12px);right:14px;font-size:11px;font-weight:700;border-radius:999px;padding:4px 10px;z-index:998;opacity:0;transition:all .3s;pointer-events:none}
@@ -79,8 +50,7 @@ body.dark .pill.on{background:#334155}
 #sync.saving{background:#FFFBEB;color:#6B3A00}
 #sync.saved{background:#ECFDF5;color:#065F46}
 #sync.err{background:#FEF0EE;color:#7A2518}
-
-/* AUTH */
+#sync.offline{background:#F1F5F9;color:#64748B}
 #auth-wrap,#forgot-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 #forgot-wrap{display:none}
 .acard{background:var(--s);border:1px solid var(--b);border-radius:20px;padding:32px 26px;width:100%;max-width:400px}
@@ -95,21 +65,18 @@ body.dark .pill.on{background:#334155}
 .aor{display:flex;align-items:center;gap:10px;margin:16px 0}
 .aor-l{flex:1;height:1px;background:var(--b)}
 .flink{text-align:center;font-size:13px;color:var(--a);cursor:pointer;margin-top:12px;font-weight:600;touch-action:manipulation}
-
-/* APP */
 #app-wrap{display:none}
 #shell{max-width:660px;margin:0 auto;padding:16px 16px 110px}
 #bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s);border-top:1px solid var(--b);padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:200;justify-content:space-around}
 #bnav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--m);padding:4px 10px;min-width:56px;touch-action:manipulation;border-radius:10px}
 #bnav button.on{color:var(--a)}
 .ni{font-size:22px}
-
 @media(max-width:599px){#bnav{display:flex}#top-tabs{display:none!important}#shell{padding:12px 12px 100px}}
 @media(min-width:600px){#bnav{display:none!important}#top-tabs{display:flex!important}}
-
 .fb-box{background:var(--s2);border-radius:12px;padding:16px;margin-top:14px}
 .fb-item{display:flex;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--b)}
 .fb-item:last-child{border:none;margin:0;padding:0}
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--m);font-size:14px;gap:10px}
 </style>
 </head>
 <body class="light">
@@ -160,14 +127,13 @@ body.dark .pill.on{background:#334155}
     <div id="hdr"></div>
     <div id="top-tabs" class="pill-bar" style="margin-bottom:18px;display:none"></div>
 
-    <!-- ADD TAB — permanently in DOM -->
+    <!-- ADD TAB -->
     <div id="tab-add" style="display:none">
       <div class="card" style="padding:18px;margin-bottom:18px">
         <p style="font-weight:700;font-size:16px;margin-bottom:16px">New Expense</p>
         <div style="display:flex;flex-direction:column;gap:12px">
           <div>
-            <input type="text" id="i-desc" placeholder="What did you spend on? (e.g. Zomato)"
-              autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" style="font-size:16px"/>
+            <input type="text" id="i-desc" placeholder="What did you spend on? (e.g. Zomato)" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" style="font-size:16px"/>
             <div id="cat-preview" style="font-size:12px;font-weight:600;margin-top:6px;min-height:18px"></div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -185,7 +151,7 @@ body.dark .pill.on{background:#334155}
       <div class="card" style="overflow:hidden;padding:0" id="recent-list"></div>
     </div>
 
-    <!-- BUDGETS TAB — permanently in DOM -->
+    <!-- BUDGETS TAB -->
     <div id="tab-budgets" style="display:none">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <p style="font-size:13px;color:var(--m)">Edit amount then tap ✓</p>
@@ -210,13 +176,33 @@ body.dark .pill.on{background:#334155}
       <div class="card" style="overflow:hidden;padding:0" id="bud-list"></div>
     </div>
 
-    <!-- DYNAMIC TABS (Dashboard, Reports) -->
+    <!-- DYNAMIC TABS -->
     <div id="content" style="display:none"></div>
   </div>
   <nav id="bnav"></nav>
 </div>
 
 <script>
+// ── PWA manifest (inline) ──
+const manifest={name:"Smart Expense Tracker",short_name:"Expenses",start_url:"/",display:"standalone",background_color:"#F8FAFC",theme_color:"#6366F1",icons:[{src:"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366F1'/><text y='.9em' font-size='80' x='10'>💸</text></svg>",sizes:"any",type:"image/svg+xml"}]};
+const mblob=new Blob([JSON.stringify(manifest)],{type:"application/json"});
+document.getElementById("pwa-manifest").href=URL.createObjectURL(mblob);
+
+// ── Service Worker ──
+if("serviceWorker" in navigator){
+  const swCode=`
+const CACHE="et-v1";
+const ASSETS=["/"];
+self.addEventListener("install",e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS))));
+self.addEventListener("fetch",e=>{
+  if(e.request.method!=="GET")return;
+  e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
+});`;
+  const swBlob=new Blob([swCode],{type:"text/javascript"});
+  navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+}
+
+// ── Supabase ──
 const {createClient}=supabase;
 const sb=createClient("https://bymzxsrlfirxynwidoyc.supabase.co","sb_publishable_SqZJ79X9qhfThpaWy8KXMw_glLvyx27");
 
@@ -234,7 +220,9 @@ const DC={
 };
 const DB={Food:8000,Transport:3000,Entertainment:2000,Shopping:5000,Health:2000,Utilities:3000,Education:2000,Other:1000};
 
-let user=null,offline=false,syncTmr=null;
+let user=null,offline=false,syncTmr=null,isOnline=navigator.onLine;
+let offlineQueue=JSON.parse(localStorage.getItem("et_queue")||"[]");
+
 let S={
   dark:JSON.parse(localStorage.getItem("et_dark")||"false"),
   tab:0,
@@ -243,6 +231,11 @@ let S={
   budgets:JSON.parse(localStorage.getItem("et_bud")||JSON.stringify(DB)),
   period:"monthly",
 };
+
+// ── Online/offline detection ──
+window.addEventListener("online",()=>{isOnline=true;flushQueue();updateSyncIndicator();});
+window.addEventListener("offline",()=>{isOnline=false;updateSyncIndicator();});
+function updateSyncIndicator(){if(!isOnline)showSync("offline");}
 
 // ── Utils ──
 const fmt=n=>"₹"+Math.round(n).toLocaleString("en-IN");
@@ -264,41 +257,121 @@ const totalBudget=()=>Object.values(S.budgets).reduce((a,b)=>a+b,0);
 
 let toastTmr;
 function toast(msg){const el=q("toast");el.textContent=msg;el.classList.add("show");clearTimeout(toastTmr);toastTmr=setTimeout(()=>el.classList.remove("show"),2600);}
-
 function showSync(st){
-  const el=q("sync");el.className="sync on "+st;
-  el.textContent=st==="saving"?"⏳ Saving":st==="saved"?"✓ Saved":"⚠ Error";
+  const el=q("sync");
+  const labels={saving:"⏳ Saving",saved:"✓ Saved",err:"⚠ Error",offline:"📶 Offline"};
+  el.className="sync on "+st;el.textContent=labels[st]||"";
   if(st==="saved")setTimeout(()=>{el.className="sync";},2200);
 }
 function applyTheme(){document.body.className=S.dark?"dark":"light";}
 
-// ── Save ──
-async function save(){
-  localStorage.setItem("et_exp",JSON.stringify(S.expenses));
+// ── Local cache helpers ──
+function cacheExpenses(){localStorage.setItem("et_exp",JSON.stringify(S.expenses));}
+function cacheSettings(){
   localStorage.setItem("et_bud",JSON.stringify(S.budgets));
   localStorage.setItem("et_cats",JSON.stringify(S.cats));
   localStorage.setItem("et_dark",JSON.stringify(S.dark));
+}
+
+// ── Supabase: expenses ──
+async function dbAddExpense(exp){
   if(!user||offline)return;
+  if(!isOnline){offlineQueue.push({action:"add",exp});localStorage.setItem("et_queue",JSON.stringify(offlineQueue));return;}
   showSync("saving");
   try{
-    const{error}=await sb.from("user_data").upsert({user_id:user.id,data:JSON.stringify({expenses:S.expenses,cats:S.cats,budgets:S.budgets,dark:S.dark}),updated_at:new Date().toISOString()},{onConflict:"user_id"});
+    const{error}=await sb.from("expenses").insert({
+      user_id:user.id,description:exp.desc,amount:exp.amount,
+      category:exp.cat,date:exp.date,created_at:new Date().toISOString()
+    });
     if(error)throw error;
     showSync("saved");
   }catch(e){showSync("err");console.warn(e);}
 }
-function dsave(){clearTimeout(syncTmr);syncTmr=setTimeout(save,700);}
+
+async function dbDeleteExpense(id){
+  if(!user||offline)return;
+  if(!isOnline){offlineQueue.push({action:"del",id});localStorage.setItem("et_queue",JSON.stringify(offlineQueue));return;}
+  try{await sb.from("expenses").delete().eq("id",id).eq("user_id",user.id);}
+  catch(e){console.warn(e);}
+}
+
+async function dbUpdateExpense(id,amount){
+  if(!user||offline)return;
+  if(!isOnline){offlineQueue.push({action:"update",id,amount});localStorage.setItem("et_queue",JSON.stringify(offlineQueue));return;}
+  showSync("saving");
+  try{
+    const{error}=await sb.from("expenses").update({amount}).eq("id",id).eq("user_id",user.id);
+    if(error)throw error;
+    showSync("saved");
+  }catch(e){showSync("err");console.warn(e);}
+}
+
+async function dbSaveSettings(){
+  if(!user||offline)return;
+  if(!isOnline)return;
+  showSync("saving");
+  try{
+    const{error}=await sb.from("user_settings").upsert({
+      user_id:user.id,budgets:S.budgets,categories:S.cats,
+      dark_mode:S.dark,updated_at:new Date().toISOString()
+    },{onConflict:"user_id"});
+    if(error)throw error;
+    showSync("saved");
+  }catch(e){showSync("err");console.warn(e);}
+}
+
+async function flushQueue(){
+  if(!user||!isOnline||offlineQueue.length===0)return;
+  showSync("saving");
+  const q2=[...offlineQueue];offlineQueue=[];
+  localStorage.setItem("et_queue","[]");
+  for(const op of q2){
+    try{
+      if(op.action==="add")await sb.from("expenses").insert({user_id:user.id,description:op.exp.desc,amount:op.exp.amount,category:op.exp.cat,date:op.exp.date,created_at:new Date().toISOString()});
+      if(op.action==="del")await sb.from("expenses").delete().eq("id",op.id).eq("user_id",user.id);
+      if(op.action==="update")await sb.from("expenses").update({amount:op.amount}).eq("id",op.id).eq("user_id",user.id);
+    }catch(e){offlineQueue.push(op);}
+  }
+  localStorage.setItem("et_queue",JSON.stringify(offlineQueue));
+  showSync("saved");
+  toast(`Synced ${q2.length} queued changes`);
+}
 
 async function loadCloud(){
   if(!user)return;
   try{
-    const{data,error}=await sb.from("user_data").select("data").eq("user_id",user.id).single();
-    if(error||!data)return;
-    const d=JSON.parse(data.data);
-    if(d.expenses)S.expenses=d.expenses;
-    if(d.cats)S.cats=d.cats;
-    if(d.budgets)S.budgets=d.budgets;
-    if(d.dark!==undefined)S.dark=d.dark;
+    // load expenses
+    const{data:exps,error:ee}=await sb.from("expenses").select("*").eq("user_id",user.id).order("date",{ascending:false}).order("created_at",{ascending:false});
+    if(!ee&&exps){
+      S.expenses=exps.map(e=>({id:e.id,desc:e.description,amount:parseFloat(e.amount),cat:e.category,date:e.date}));
+      cacheExpenses();
+    }
+    // load settings
+    const{data:sett,error:se}=await sb.from("user_settings").select("*").eq("user_id",user.id).single();
+    if(!se&&sett){
+      if(sett.budgets&&Object.keys(sett.budgets).length)S.budgets=sett.budgets;
+      if(sett.categories&&Object.keys(sett.categories).length)S.cats=sett.categories;
+      if(sett.dark_mode!==null)S.dark=sett.dark_mode;
+      cacheSettings();
+    }
+    // migrate old user_data blob if exists
+    await migrateOldData();
   }catch(e){console.warn("Cloud load failed",e);}
+}
+
+async function migrateOldData(){
+  try{
+    const{data}=await sb.from("user_data").select("data").eq("user_id",user.id).single();
+    if(!data)return;
+    const old=JSON.parse(data.data);
+    if(!old.expenses||old.expenses.length===0)return;
+    // insert old expenses that don't exist yet
+    const inserts=old.expenses.map(e=>({user_id:user.id,description:e.desc,amount:e.amount,category:e.cat||e.category||"Other",date:e.date,created_at:new Date().toISOString()}));
+    await sb.from("expenses").upsert(inserts,{ignoreDuplicates:true});
+    // delete old blob
+    await sb.from("user_data").delete().eq("user_id",user.id);
+    toast("Migrated your old data ✓");
+  }catch(e){/* no old data, fine */}
 }
 
 // ── Auth ──
@@ -317,8 +390,7 @@ function showForgot(){q("auth-wrap").style.display="none";q("forgot-wrap").style
 function showAuth(){q("forgot-wrap").style.display="none";q("auth-wrap").style.display="flex";}
 
 async function authSubmit(){
-  const email=q("f-email").value.trim();
-  const pw=q("f-pw").value;
+  const email=q("f-email").value.trim();const pw=q("f-pw").value;
   if(!email||!pw){showAuthMsg("Please fill in all fields.");return;}
   q("auth-btn").textContent="Please wait…";q("auth-btn").disabled=true;
   if(authMode==="signup"){
@@ -351,8 +423,7 @@ async function sendReset(){
 async function doLogout(){
   await sb.auth.signOut();user=null;offline=false;
   S.expenses=[];S.cats=JSON.parse(JSON.stringify(DC));S.budgets=JSON.parse(JSON.stringify(DB));
-  q("app-wrap").style.display="none";
-  q("auth-wrap").style.display="flex";
+  q("app-wrap").style.display="none";q("auth-wrap").style.display="flex";
   toast("Logged out.");
 }
 
@@ -362,11 +433,9 @@ function launch(){
   q("app-wrap").style.display="block";
   applyTheme();
   q("i-date").value=new Date().toISOString().slice(0,10);
-  setupAddTab();
-  setupBudgetsTab();
-  renderHeader();
-  renderNav();
-  setTab(0);
+  setupAddTab();setupBudgetsTab();
+  renderHeader();renderNav();setTab(0);
+  if(offlineQueue.length>0&&isOnline)flushQueue();
 }
 
 (async()=>{
@@ -374,7 +443,7 @@ function launch(){
   if(session){user=session.user;await loadCloud();launch();}
 })();
 
-// ── Add Tab setup (wired once) ──
+// ── Add Tab ──
 function setupAddTab(){
   populateCatSelect();
   q("i-desc").oninput=()=>{
@@ -395,35 +464,53 @@ function populateCatSelect(){
   if(cur)sel.value=cur;
 }
 
-// ── Budgets Tab setup (wired once, list re-rendered) ──
+// ── Budgets Tab ──
 function setupBudgetsTab(){
-  q("btn-newcat").onclick=()=>{
-    const f=q("newcat-form");
-    f.style.display=f.style.display==="none"?"block":"none";
-  };
+  q("btn-newcat").onclick=()=>{const f=q("newcat-form");f.style.display=f.style.display==="none"?"block":"none";};
   q("btn-addcat").onclick=addCat;
   q("btn-cancelcat").onclick=()=>{q("newcat-form").style.display="none";};
 }
 
 // ── Actions ──
-function addExpense(){
+async function addExpense(){
   const desc=q("i-desc").value.trim();
   const amt=parseFloat(q("i-amt").value);
   const date=q("i-date").value;
   const cat=q("i-cat").value||categorize(desc);
   if(!desc||isNaN(amt)||amt<=0){toast("Enter a valid description and amount.");return;}
-  S.expenses.unshift({id:Date.now(),desc,amount:amt,date,cat});
-  dsave();
+  const exp={id:user?undefined:Date.now().toString(),desc,amount:amt,date,cat};
+  // optimistic UI
+  S.expenses.unshift({...exp,id:exp.id||"pending-"+Date.now()});
+  cacheExpenses();
   q("i-desc").value="";q("i-amt").value="";q("i-cat").value="";q("cat-preview").textContent="";
+  renderRecentList();q("exp-count").textContent=S.expenses.length+" total";
   toast(`Added to ${cat}!`);
-  renderRecentList();
-  q("exp-count").textContent=S.expenses.length+" total";
+  // sync to DB (get real UUID back)
+  if(user&&!offline){
+    if(isOnline){
+      showSync("saving");
+      try{
+        const{data,error}=await sb.from("expenses").insert({
+          user_id:user.id,description:desc,amount:amt,category:cat,date,created_at:new Date().toISOString()
+        }).select().single();
+        if(error)throw error;
+        // replace pending id with real uuid
+        S.expenses=S.expenses.map(e=>e.id===("pending-"+Date.now().toString().slice(0,-3))||e.desc===desc&&e.amount===amt?{...e,id:data.id}:e);
+        cacheExpenses();showSync("saved");
+      }catch(e){showSync("err");console.warn(e);}
+    }else{
+      offlineQueue.push({action:"add",exp:{desc,amount:amt,cat,date}});
+      localStorage.setItem("et_queue",JSON.stringify(offlineQueue));
+      showSync("offline");
+    }
+  }
 }
 
-function delExp(id){
+async function delExp(id){
   S.expenses=S.expenses.filter(e=>e.id!=id);
-  dsave();renderRecentList();
+  cacheExpenses();renderRecentList();
   q("exp-count").textContent=S.expenses.length+" total";
+  await dbDeleteExpense(id);
 }
 
 function startEditExp(id){
@@ -434,47 +521,47 @@ function startEditExp(id){
     <div class="tile" style="background:${S.dark?ci.dark:ci.light}">${ci.icon}</div>
     <div style="flex:1;min-width:0;padding-right:8px">
       <div style="font-size:13px;font-weight:600;margin-bottom:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${exp.desc}</div>
-      <input type="number" inputmode="decimal" value="${exp.amount}" id="edit-amt-${id}"
-        style="font-size:16px;padding:10px 12px;width:100%"/>
+      <input type="number" inputmode="decimal" value="${exp.amount}" id="edit-amt-${id}" style="font-size:16px;padding:10px 12px;width:100%"/>
     </div>
     <div style="display:flex;gap:6px;flex-shrink:0">
-      <button class="bg" onclick="saveEditAmt(${id})" style="padding:10px 12px">✓</button>
+      <button class="bg" onclick="saveEditAmt('${id}')" style="padding:10px 12px">✓</button>
       <button class="bgh" onclick="renderRecentList()" style="padding:10px 12px">✕</button>
     </div>`;
   setTimeout(()=>{const el=q(`edit-amt-${id}`);if(el){el.focus();el.select();}},50);
 }
 
-function saveEditAmt(id){
+async function saveEditAmt(id){
   const el=q(`edit-amt-${id}`);if(!el)return;
   const v=parseFloat(el.value);
   if(isNaN(v)||v<=0){toast("Invalid amount");return;}
   S.expenses=S.expenses.map(e=>e.id==id?{...e,amount:v}:e);
-  dsave();renderRecentList();toast("Updated!");
+  cacheExpenses();renderRecentList();toast("Updated!");
+  await dbUpdateExpense(id,v);
 }
 
-function saveBudget(cat){
-  const el=q(`bud-${CSS.escape(cat)}`);if(!el)return;
+async function saveBudget(cat){
+  const safeId=`bud-${cat.replace(/[^a-zA-Z0-9]/g,"-")}`;
+  const el=q(safeId);if(!el)return;
   const v=parseFloat(el.value);
   if(isNaN(v)||v<0){toast("Enter a valid amount");return;}
-  S.budgets[cat]=v;
-  dsave();toast(`${cat} budget updated!`);
-  // re-render dashboard bars if visible
+  S.budgets[cat]=v;cacheSettings();
+  toast(`${cat} budget updated!`);
+  await dbSaveSettings();
   if(S.tab===1)renderDynamic();
 }
 
-function addCat(){
+async function addCat(){
   const name=q("i-newcat").value.trim();
   if(!name){toast("Enter a category name");return;}
   const color=q("i-newcolor").value;
   const icon=q("i-newicon").value||"🏷";
   S.cats[name]={kw:[],color,light:"#F5F3FF",dark:"#2D1B69",icon};
   S.budgets[name]=2000;
-  dsave();
+  cacheSettings();populateCatSelect();renderBudgetList();
   q("i-newcat").value="";q("i-newicon").value="🏷";
   q("newcat-form").style.display="none";
-  populateCatSelect();
-  renderBudgetList();
   toast(`"${name}" added!`);
+  await dbSaveSettings();
 }
 
 function downloadExcel(){
@@ -494,21 +581,29 @@ function downloadExcel(){
 function importFile(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=ev=>{
+  reader.onload=async ev=>{
     try{
       const lines=ev.target.result.split("\n").map(l=>l.trim()).filter(Boolean);
       const data=lines.filter(l=>/^\d{4}-\d{2}-\d{2}/.test(l)).map(l=>{
         const[date,desc,cat,amt]=l.split("\t");const amount=parseFloat(amt);
         if(!date||!desc||isNaN(amount))return null;
-        return{id:Date.now()+Math.random(),date:date.trim(),desc:desc.trim(),cat:(cat||"Other").trim(),amount};
+        return{desc:desc.trim(),amount,cat:(cat||"Other").trim(),date:date.trim()};
       }).filter(Boolean);
       if(!data.length){toast("No valid data found");return;}
-      const merged=[...data,...S.expenses].filter((e,i,arr)=>arr.findIndex(x=>x.date===e.date&&x.desc===e.desc&&x.amount===e.amount)===i);
-      S.expenses=merged;dsave();
-      if(S.tab===0)renderRecentList();
-      else renderDynamic();
+      // add to UI optimistically
+      const newExps=data.map(e=>({id:"import-"+Date.now()+Math.random(),...e}));
+      S.expenses=[...newExps,...S.expenses];
+      cacheExpenses();renderRecentList();
+      q("exp-count").textContent=S.expenses.length+" total";
       toast(`Imported ${data.length} expenses!`);
-    }catch{toast("Failed to parse file.");}
+      // sync to DB
+      if(user&&!offline&&isOnline){
+        showSync("saving");
+        const inserts=data.map(e=>({user_id:user.id,description:e.desc,amount:e.amount,category:e.cat,date:e.date,created_at:new Date().toISOString()}));
+        await sb.from("expenses").insert(inserts);
+        await loadCloud();renderRecentList();showSync("saved");
+      }
+    }catch(e){toast("Failed to parse file.");}
     input.value="";
   };
   reader.readAsText(file);
@@ -516,15 +611,14 @@ function importFile(input){
 
 // ── Feedback engine ──
 function generateFeedback(){
-  const ct=catTotals();const ts=totalSpend();const tb=totalBudget();
-  const items=[];
+  const ct=catTotals();const ts=totalSpend();const tb=totalBudget();const items=[];
   const pct=tb>0?Math.round((ts/tb)*100):0;
   if(pct===0){items.push({icon:"👋",label:"No data yet",text:"Add some expenses to get personalised feedback on your spending."});return items;}
-  if(pct<60)items.push({icon:"🟢",label:"Great overall",text:`You've used ${pct}% of your total budget — you're well in control. Keep it up!`});
-  else if(pct<85)items.push({icon:"🟡",label:"Doing okay",text:`You're at ${pct}% of your total budget. A few categories need attention before month-end.`});
-  else if(pct<100)items.push({icon:"🟠",label:"Getting close",text:`You've used ${pct}% of your total budget. Time to pull back on discretionary spending.`});
-  else items.push({icon:"🔴",label:"Over budget",text:`You've exceeded your total budget by ${fmt(ts-tb)}. Review your biggest categories immediately.`});
-  const tips={Food:"Try cooking at home 2–3 days a week or switching to weekly BigBasket orders instead of daily Blinkit runs.",Transport:"Consider the metro or sharing rides — Rapido bike taxis can cut costs significantly.",Entertainment:"Rotate OTT subscriptions instead of keeping all active simultaneously.",Shopping:"Try a 24-hour rule before buying — if you still want it tomorrow, then buy.",Health:"Compare prices on 1mg vs Apollo Pharmacy — savings can be 20–30%.",Utilities:"Use PhonePe or GPay cashback offers for bill payments.",Education:"Udemy courses go on sale frequently for ₹399–499 — wait for a deal.",Other:"Review if any items here belong to a specific category."};
+  if(pct<60)items.push({icon:"🟢",label:"Great overall",text:`You've used ${pct}% of your total budget — well in control!`});
+  else if(pct<85)items.push({icon:"🟡",label:"Doing okay",text:`You're at ${pct}% of your total budget. A few categories need attention.`});
+  else if(pct<100)items.push({icon:"🟠",label:"Getting close",text:`${pct}% of budget used. Pull back on discretionary spending.`});
+  else items.push({icon:"🔴",label:"Over budget",text:`Exceeded total budget by ${fmt(ts-tb)}. Review your biggest categories.`});
+  const tips={Food:"Try cooking at home 2–3 days a week or switch to weekly BigBasket orders.",Transport:"Consider the metro or Rapido bike taxis to cut costs.",Entertainment:"Rotate OTT subscriptions instead of keeping all active.",Shopping:"Try a 24-hour rule before buying.",Health:"Compare prices on 1mg vs Apollo — savings can be 20–30%.",Utilities:"Use PhonePe or GPay cashback for bill payments.",Education:"Wait for Udemy sales — courses go for ₹399–499.",Other:"Review if any items here belong to a specific category."};
   const over=[],near=[];
   for(const[cat,spent]of Object.entries(ct)){
     const bud=S.budgets[cat]||0;if(!bud)continue;
@@ -535,18 +629,18 @@ function generateFeedback(){
   over.sort((a,b)=>b.p-a.p);
   if(over.length){
     const top=over[0];
-    items.push({icon:"🚨",label:`${top.cat} is over budget (${top.p}%)`,text:`Spent ${fmt(top.spent)} against budget of ${fmt(top.bud)}. ${tips[top.cat]||"Consider reducing spend here."}`});
+    items.push({icon:"🚨",label:`${top.cat} is over budget (${top.p}%)`,text:`Spent ${fmt(top.spent)} against ${fmt(top.bud)}. ${tips[top.cat]||"Reduce spend here."}`});
     if(over.length>1)items.push({icon:"⚠️",label:`${over.length-1} more over budget`,text:over.slice(1).map(o=>`${o.cat}: ${fmt(o.spent)} / ${fmt(o.bud)}`).join(" · ")});
   }
-  if(near.length)items.push({icon:"🔔",label:"Nearing limit",text:near.map(n=>`${n.cat} at ${n.p}%`).join(", ")+". Slow down here to finish the month comfortably."});
+  if(near.length)items.push({icon:"🔔",label:"Nearing limit",text:near.map(n=>`${n.cat} at ${n.p}%`).join(", ")+". Slow down to finish the month comfortably."});
   const sorted=Object.entries(ct).sort((a,b)=>b[1]-a[1]);
-  if(sorted.length&&ts>0){const[tc,ta]=sorted[0];const share=Math.round((ta/ts)*100);if(share>40)items.push({icon:"📌",label:`${tc} dominates (${share}% of total)`,text:`${fmt(ta)} spent on ${tc}. Consider if this matches your priorities.`});}
+  if(sorted.length&&ts>0){const[tc,ta]=sorted[0];const share=Math.round((ta/ts)*100);if(share>40)items.push({icon:"📌",label:`${tc} dominates (${share}% of total)`,text:`${fmt(ta)} on ${tc}. Consider if this matches your priorities.`});}
   const saved=tb-ts;
-  if(saved>0)items.push({icon:"💡",label:"Savings opportunity",text:`${fmt(saved)} remains in your budget. Consider moving a portion to savings — even ₹500/month adds up over time.`});
+  if(saved>0)items.push({icon:"💡",label:"Savings opportunity",text:`${fmt(saved)} left in budget. Consider moving some to savings — even ₹500/month adds up.`});
   return items;
 }
 
-// ── Render: header & nav (lightweight, no tab flash) ──
+// ── Render ──
 function renderHeader(){
   const ts=totalSpend();const tb=totalBudget();
   const ul=offline?"⚡ Offline":(user?.email?`☁ ${user.email}`:"");
@@ -559,7 +653,7 @@ function renderHeader(){
       </p>
     </div>
     <div style="display:flex;gap:8px">
-      <button id="dark-btn" onclick="S.dark=!S.dark;dsave();applyTheme();q('dark-btn').textContent=S.dark?'☀':'🌙'" style="background:var(--s2);color:var(--t);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:14px">${S.dark?"☀":"🌙"}</button>
+      <button id="dark-btn" onclick="S.dark=!S.dark;cacheSettings();applyTheme();q('dark-btn').textContent=S.dark?'☀':'🌙';dbSaveSettings()" style="background:var(--s2);color:var(--t);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:14px">${S.dark?"☀":"🌙"}</button>
       ${!offline&&user?`<button onclick="doLogout()" style="background:var(--s2);color:var(--m);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:13px">Logout</button>`:""}
     </div>
   </div>`;
@@ -572,10 +666,7 @@ function renderNav(){
 }
 
 function setTab(i){
-  S.tab=i;
-  renderHeader();
-  renderNav();
-  // show/hide permanent tabs
+  S.tab=i;renderHeader();renderNav();
   q("tab-add").style.display=i===0?"block":"none";
   q("tab-budgets").style.display=i===3?"block":"none";
   q("content").style.display=(i===1||i===2)?"block":"none";
@@ -584,13 +675,9 @@ function setTab(i){
   if(i===3)renderBudgetList();
 }
 
-// ── Render: recent expenses list ──
 function renderRecentList(){
   const el=q("recent-list");if(!el)return;
-  if(!S.expenses.length){
-    el.innerHTML=`<div style="padding:28px;text-align:center;color:var(--m);font-size:14px">No expenses yet 🎉<br/><span style="font-size:12px;margin-top:4px;display:block">Add your first one above</span></div>`;
-    return;
-  }
+  if(!S.expenses.length){el.innerHTML=`<div style="padding:28px;text-align:center;color:var(--m);font-size:14px">No expenses yet 🎉<br/><span style="font-size:12px;margin-top:4px;display:block">Add your first one above</span></div>`;return;}
   el.innerHTML=S.expenses.slice(0,30).map((e,i,arr)=>{
     const ci=S.cats[e.cat]||DC.Other;
     return`<div class="row" data-id="${e.id}" style="${i<arr.length-1?"border-bottom:1px solid var(--b)":""}">
@@ -601,35 +688,28 @@ function renderRecentList(){
       </div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
         <span style="font-weight:700;font-size:14px;color:${ci.color}">${fmt(e.amount)}</span>
-        <button onclick="startEditExp(${e.id})" style="background:${S.dark?"#1E3A6E":"#EFF6FF"};color:#3B82F6;padding:7px 10px;font-size:12px;border-radius:8px;border:none">Edit</button>
-        <button onclick="delExp(${e.id})" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--r);padding:7px 10px;font-size:12px;border-radius:8px;border:none">Del</button>
+        <button onclick="startEditExp('${e.id}')" style="background:${S.dark?"#1E3A6E":"#EFF6FF"};color:#3B82F6;padding:7px 10px;font-size:12px;border-radius:8px;border:none">Edit</button>
+        <button onclick="delExp('${e.id}')" style="background:${S.dark?"#3B1A1A":"#FEF0EE"};color:var(--r);padding:7px 10px;font-size:12px;border-radius:8px;border:none">Del</button>
       </div>
     </div>`;
   }).join("");
 }
 
-// ── Render: budget list (permanent DOM, inputs always present) ──
 function renderBudgetList(){
   const el=q("bud-list");if(!el)return;
   const ct=catTotals();
   el.innerHTML=Object.entries(S.cats).map(([cat,ci],i,arr)=>{
-    const budget=S.budgets[cat]||0;
-    const spent=ct[cat]||0;
-    const over=spent>budget&&budget>0;
-    const warn=!over&&budget>0&&(spent/budget)>0.75;
-    // use CSS.escape-safe id: replace spaces/special chars
+    const budget=S.budgets[cat]||0;const spent=ct[cat]||0;
+    const over=spent>budget&&budget>0;const warn=!over&&budget>0&&(spent/budget)>0.75;
     const safeId=`bud-${cat.replace(/[^a-zA-Z0-9]/g,"-")}`;
     return`<div class="row" style="${i<arr.length-1?"border-bottom:1px solid var(--b)":""}">
       <div class="tile" style="background:${S.dark?ci.dark:ci.light}">${ci.icon}</div>
       <div style="flex:1;min-width:0;padding-right:8px">
         <div style="font-weight:600;font-size:13px;margin-bottom:2px">${cat}</div>
-        <div style="font-size:12px;color:${over?"var(--r)":warn?"var(--y)":"var(--m)"}">
-          Spent: ${fmt(spent)} ${over?"🔴 over":warn?"🟡 near":""}
-        </div>
+        <div style="font-size:12px;color:${over?"var(--r)":warn?"var(--y)":"var(--m)"}">Spent: ${fmt(spent)} ${over?"🔴 over":warn?"🟡 near":""}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <input type="number" id="${safeId}" inputmode="decimal"
-          value="${budget}" min="0" step="100"
+        <input type="number" id="${safeId}" inputmode="decimal" value="${budget}" min="0" step="100"
           style="width:90px;font-size:16px;padding:9px 10px;text-align:right"
           onkeydown="if(event.key==='Enter')saveBudget('${cat}')"/>
         <button class="bg" onclick="saveBudget('${cat}')" style="padding:10px 12px;font-size:15px;border-radius:10px">✓</button>
@@ -638,15 +718,13 @@ function renderBudgetList(){
   }).join("");
 }
 
-// ── Render: dynamic content (dashboard & reports) ──
 function renderDynamic(){
   if(S.tab===1)q("content").innerHTML=renderDashboard();
   if(S.tab===2)q("content").innerHTML=renderReports();
 }
 
 function renderDashboard(){
-  const ct=catTotals();const ts=totalSpend();const tb=totalBudget();
-  const fb=generateFeedback();
+  const ct=catTotals();const ts=totalSpend();const tb=totalBudget();const fb=generateFeedback();
   return`
   <div class="sgrid">
     ${[["Total Spent",fmt(ts),"#6366F1"],["Budget Left",fmt(Math.max(0,tb-ts)),"#10B981"],["Entries",S.expenses.length,"#F59E0B"]].map(([l,v,c])=>`
@@ -728,8 +806,6 @@ function renderReports(){
     </div>`;
   }).join("")}`;
 }
-
-function render(){setTab(S.tab);}
 </script>
 </body>
 </html>
