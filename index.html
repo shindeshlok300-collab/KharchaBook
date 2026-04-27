@@ -185,6 +185,37 @@ body.dark .pill.on{background:#334155}
   <div id="shell">
     <div id="hdr"></div>
     <div id="top-tabs" class="pill-bar" style="margin-bottom:18px;display:none"></div>
+
+    <!-- ADD TAB — always in DOM, never innerHTML -->
+    <div id="tab-add" style="display:none">
+      <div class="card" style="padding:18px;margin-bottom:18px">
+        <p style="font-weight:700;font-size:16px;margin-bottom:16px">New Expense</p>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <input type="text" id="i-desc" placeholder="What did you spend on? (e.g. Zomato)"
+              autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"
+              style="font-size:16px"/>
+            <div id="cat-preview" style="font-size:12px;font-weight:600;margin-top:6px;min-height:18px;color:var(--a)"></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <input type="number" id="i-amt" placeholder="Amount (₹)"
+              inputmode="decimal" min="0" step="any" style="font-size:16px"/>
+            <input type="date" id="i-date" style="font-size:16px"/>
+          </div>
+          <select id="i-cat" style="font-size:16px">
+            <option value="">Auto-detect category</option>
+          </select>
+          <button class="bp" id="btn-add-exp" style="width:100%;padding:15px;font-size:16px">+ Add Expense</button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <p style="font-weight:700;font-size:15px">Recent Expenses</p>
+        <span id="exp-count" style="font-size:12px;color:var(--m)"></span>
+      </div>
+      <div class="card" style="overflow:hidden;padding:0" id="recent-list"></div>
+    </div>
+
+    <!-- OTHER TABS rendered dynamically -->
     <div id="content"></div>
   </div>
   <nav id="bnav"></nav>
@@ -343,7 +374,29 @@ async function doLogout(){
 function launch(){
   q("auth-wrap").style.display="none";q("forgot-wrap").style.display="none";
   q("app-wrap").style.display="block";
-  applyTheme();render();
+  applyTheme();
+  // set today's date
+  q("i-date").value=new Date().toISOString().slice(0,10);
+  // populate category select
+  populateCatSelect();
+  // wire up persistent inputs
+  q("i-desc").addEventListener("input",()=>{
+    const det=q("i-cat").value||categorize(q("i-desc").value||"x");
+    const info=S.cats[det]||DC.Other;
+    const prev=q("cat-preview");
+    if(q("i-desc").value){prev.textContent=`→ ${det}`;prev.style.color=info.color;}
+    else prev.textContent="";
+  });
+  q("btn-add-exp").addEventListener("click",addExpense);
+  render();
+}
+
+function populateCatSelect(){
+  const sel=q("i-cat");if(!sel)return;
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">Auto-detect category</option>`+
+    Object.entries(S.cats).map(([cat,ci])=>`<option value="${cat}">${ci.icon} ${cat}</option>`).join("");
+  sel.value=cur;
 }
 
 // session check on load
@@ -548,35 +601,32 @@ function render(){
       </p>
     </div>
     <div style="display:flex;gap:8px">
-      <button onclick="S.dark=!S.dark;dsave();applyTheme();q('hdr').querySelector('button').textContent=S.dark?'☀':'🌙'" style="background:var(--s2);color:var(--t);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:13px">${S.dark?"☀":"🌙"}</button>
+      <button onclick="S.dark=!S.dark;dsave();applyTheme();" style="background:var(--s2);color:var(--t);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:13px">${S.dark?"☀":"🌙"}</button>
       ${!offline&&user?`<button onclick="doLogout()" style="background:var(--s2);color:var(--m);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:13px">Logout</button>`:""}
     </div>
   </div>`;
 
   const tt=q("top-tabs");
-  if(tt)tt.innerHTML=TABS.map((t,i)=>`<button class="pill ${S.tab===i?"on":""}" onclick="S.tab=${i};render()">${t.i} ${t.l}</button>`).join("");
+  if(tt)tt.innerHTML=TABS.map((t,i)=>`<button class="pill ${S.tab===i?"on":""}" onclick="setTab(${i})">${t.i} ${t.l}</button>`).join("");
 
-  q("bnav").innerHTML=TABS.map((t,i)=>`<button class="${S.tab===i?"on":""}" onclick="S.tab=${i};render()"><span class="ni">${t.i}</span>${t.l}</button>`).join("");
+  q("bnav").innerHTML=TABS.map((t,i)=>`<button class="${S.tab===i?"on":""}" onclick="setTab(${i})"><span class="ni">${t.i}</span>${t.l}</button>`).join("");
 
-  const renders=[renderAdd,renderDashboard,renderReports,renderBudgets];
-  q("content").innerHTML=renders[S.tab]();
+  // show/hide tabs
+  q("tab-add").style.display=S.tab===0?"block":"none";
+  q("content").style.display=S.tab===0?"none":"block";
 
-  // post-render setup
-  if(S.tab===0)renderRecentList();
-  if(S.tab===3)renderBudgetList();
-
-  // live cat preview on desc input
-  const descEl=q("i-desc");
-  if(descEl){
-    descEl.addEventListener("input",()=>{
-      const det=q("i-cat")?.value||categorize(descEl.value||"x");
-      const info=S.cats[det]||DC.Other;
-      const prev=q("cat-preview");
-      if(prev&&descEl.value){prev.textContent=`→ ${det}`;prev.style.color=info.color;}
-      else if(prev)prev.textContent="";
-    });
+  if(S.tab===0){
+    renderRecentList();
+    q("exp-count").textContent=S.expenses.length+" total";
+    populateCatSelect();
+  } else {
+    const renders=[null,renderDashboard,renderReports,renderBudgets];
+    q("content").innerHTML=renders[S.tab]();
+    if(S.tab===3)renderBudgetList();
   }
 }
+
+function setTab(i){S.tab=i;render();}
 
 function renderAdd(){
   const today=new Date().toISOString().slice(0,10);
