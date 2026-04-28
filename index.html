@@ -152,7 +152,34 @@ body.dark .pill.on{background:#334155}
   </div>
 </div>
 
-<!-- APP -->
+<!-- ONBOARDING SCREEN -->
+<div id="onboarding-wrap" style="display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;background:var(--bg)">
+  <div class="acard" style="max-width:440px">
+
+    <!-- Step 1: Username -->
+    <div id="ob-step1">
+      <div style="font-size:40px;margin-bottom:10px">👋</div>
+      <div class="ath">Welcome to KharchaPlus!</div>
+      <div class="asub">Let's personalise your experience. What should we call you?</div>
+      <div id="ob-msg1"></div>
+      <div style="margin-bottom:16px">
+        <input type="text" id="ob-name" placeholder="Your first name (e.g. Lokesh)" autocomplete="given-name" autocorrect="off" autocapitalize="words"/>
+      </div>
+      <button class="bp" onclick="obNext()" style="width:100%;padding:14px;font-size:16px">Continue →</button>
+    </div>
+
+    <!-- Step 2: Template picker -->
+    <div id="ob-step2" style="display:none">
+      <div style="font-size:40px;margin-bottom:10px">🎯</div>
+      <div class="ath" id="ob-greeting">Set up your budget</div>
+      <div class="asub">Pick a template that matches your lifestyle. You can always change it later.</div>
+      <div id="ob-msg2"></div>
+      <div id="ob-templates" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px"></div>
+      <button class="bp" onclick="obFinish()" style="width:100%;padding:14px;font-size:16px">Let's go →</button>
+    </div>
+
+  </div>
+</div>
 <div id="app-wrap">
   <div id="shell">
     <div id="hdr"></div>
@@ -189,7 +216,8 @@ body.dark .pill.on{background:#334155}
             <input type="number" id="i-amt" placeholder="Amount" inputmode="decimal" min="0" step="any"/>
             <input type="date" id="i-date"/>
           </div>
-          <select id="i-cat"></select>
+          <div id="cat-pills" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <input type="hidden" id="i-cat" value=""/>
           <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--s2);border-radius:12px">
             <label class="tog"><input type="checkbox" id="i-recurring" onchange="toggleRecurringOpts()"/><span class="tog-sl"></span></label>
             <div>
@@ -270,7 +298,19 @@ body.dark .pill.on{background:#334155}
     <div id="tab-settings" style="display:none">
       <div class="card" style="overflow:hidden;padding:0;margin-bottom:16px">
         <div style="padding:18px 16px;border-bottom:1px solid var(--b)">
-          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Currency</div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Display Name</div>
+          <div style="font-size:12px;color:var(--m);margin-bottom:12px">How you appear in the app</div>
+          <div style="display:flex;gap:8px">
+            <input type="text" id="sett-name" placeholder="Your name" autocorrect="off" autocapitalize="words" style="flex:1"/>
+            <button id="btn-save-name" class="bp" style="padding:12px 16px;font-size:13px;flex-shrink:0">Save</button>
+          </div>
+        </div>
+        <div style="padding:18px 16px;border-bottom:1px solid var(--b)">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">Budget Template</div>
+          <div style="font-size:12px;color:var(--m);margin-bottom:12px">Change your budget template — this will update all category budgets</div>
+          <div id="sett-templates" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+          <button id="btn-apply-template" class="bp" style="width:100%;padding:12px;font-size:14px">Apply Template</button>
+        </div>
           <div style="font-size:12px;color:var(--m);margin-bottom:12px">All amounts display in your chosen currency</div>
           <select id="sel-currency"></select>
           <button class="bp" id="btn-save-currency" style="width:100%;padding:12px;font-size:14px;margin-top:10px">Save Currency</button>
@@ -553,6 +593,9 @@ async function loadCloud() {
       if(sett.currency)S.currency=sett.currency;
       S.is_founding_member = sett.is_founding_member||false;
       S.member_number = sett.member_number||null;
+      S.display_name = sett.display_name||null;
+      S.onboarding_complete = sett.onboarding_complete||false;
+      S.budget_template = sett.budget_template||"professional";
       cacheSett();
     }
     // migrate old blob data
@@ -653,8 +696,117 @@ function launch() {
   subscribeRT();
 }
 
-// Boot
-loadFoundingCounter(); // visual only — non-blocking
+// ── Budget Templates ──
+const TEMPLATES = {
+  student: {
+    label:"🎓 Student",
+    desc:"Low budget, focused on education & essentials",
+    budgets:{Food:3000,Transport:1500,Entertainment:500,Shopping:1000,Health:500,Utilities:1000,Education:3000,Other:500}
+  },
+  professional: {
+    label:"💼 Working Professional",
+    desc:"Balanced budget for a working individual",
+    budgets:{Food:6000,Transport:3000,Entertainment:2000,Shopping:4000,Health:2000,Utilities:3000,Education:1000,Other:1000}
+  },
+  family: {
+    label:"👨‍👩‍👧 Family",
+    desc:"Higher grocery, health & utility focus",
+    budgets:{Food:12000,Transport:4000,Entertainment:2000,Shopping:6000,Health:4000,Utilities:5000,Education:3000,Other:2000}
+  },
+  traveller: {
+    label:"✈️ Frequent Traveller",
+    desc:"Transport & entertainment heavy",
+    budgets:{Food:5000,Transport:8000,Entertainment:4000,Shopping:3000,Health:2000,Utilities:2000,Education:500,Other:1500}
+  },
+  saver: {
+    label:"💰 Saver Mode",
+    desc:"Tight budgets to maximise savings",
+    budgets:{Food:4000,Transport:1500,Entertainment:500,Shopping:2000,Health:1000,Utilities:2000,Education:500,Other:500}
+  }
+};
+
+let selectedTemplate = "professional";
+
+function applyTemplate(key) {
+  const t = TEMPLATES[key]; if(!t)return;
+  S.budgets = {...S.budgets, ...t.budgets};
+  S.budget_template = key;
+  cacheSett();
+}
+
+function renderTemplateCards(containerId, activeKey, onSelect) {
+  const el = q(containerId); if(!el)return;
+  el.innerHTML = Object.entries(TEMPLATES).map(([key,t]) => {
+    const isActive = activeKey === key;
+    return '<div onclick="'+onSelect+'(\''+key+'\')" style="cursor:pointer;border:2px solid '+(isActive?"var(--a)":"var(--b)")+';border-radius:14px;padding:14px 16px;background:'+(isActive?(S.dark?"#1A1040":"#F5F3FF"):"var(--s)")+';transition:all .2s">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between">'
+      +'<div style="font-size:14px;font-weight:700;color:'+(isActive?"var(--a)":"var(--t)")+'">'+t.label+'</div>'
+      +(isActive?'<span style="background:var(--a);color:#fff;border-radius:999px;padding:2px 10px;font-size:11px;font-weight:700">Selected</span>':"")
+      +'</div>'
+      +'<div style="font-size:12px;color:var(--m);margin-top:4px">'+t.desc+'</div>'
+      +'<div style="font-size:11px;color:var(--m);margin-top:8px">'+Object.entries(t.budgets).slice(0,4).map(([c,v])=>c+': '+fmt(v)).join(' · ')+'…</div>'
+      +'</div>';
+  }).join("");
+}
+
+// Onboarding
+function obSelectTemplate(key) {
+  selectedTemplate = key;
+  renderTemplateCards("ob-templates", key, "obSelectTemplate");
+}
+
+function obNext() {
+  const name = q("ob-name").value.trim();
+  if(!name) {
+    const msg = q("ob-msg1"); msg.textContent="Please enter your name."; msg.className="amsg err"; return;
+  }
+  S.display_name = name;
+  q("ob-greeting").textContent = "Nice to meet you, "+name+"! 🎉";
+  q("ob-step1").style.display="none";
+  q("ob-step2").style.display="block";
+  renderTemplateCards("ob-templates", selectedTemplate, "obSelectTemplate");
+}
+
+async function obFinish() {
+  const btn = document.querySelector('#ob-step2 button');
+  btn.textContent="Saving…"; btn.disabled=true;
+  applyTemplate(selectedTemplate);
+  S.onboarding_complete = true;
+  cacheSett();
+  try {
+    await sb.from("user_settings").upsert({
+      user_id: user.id,
+      display_name: S.display_name,
+      budgets: S.budgets,
+      categories: S.cats,
+      dark_mode: S.dark,
+      currency: S.currency,
+      onboarding_complete: true,
+      budget_template: selectedTemplate,
+      updated_at: new Date().toISOString()
+    },{onConflict:"user_id"});
+  } catch(e){}
+  q("onboarding-wrap").style.display="none";
+  launchApp();
+}
+
+function showOnboarding() {
+  q("auth-wrap").style.display="none";
+  q("onboarding-wrap").style.display="flex";
+  applyTheme();
+}
+
+function launchApp() {
+  q("onboarding-wrap").style.display="none";
+  q("auth-wrap").style.display="none";
+  q("app-wrap").style.display="block";
+  applyTheme();
+  q("i-date").value=new Date().toISOString().slice(0,10);
+  setupAddTab(); setupBudgetsTab(); setupSettingsTab();
+  renderHeader(); renderNav(); setTab(0);
+  if(offlineQueue.length&&isOnline)flushQueue();
+  subscribeRT();
+}
 (async () => {
   const {data:{session}} = await sb.auth.getSession();
   if (session) { user=session.user; await loadCloud(); launch(); }
@@ -801,12 +953,48 @@ function setupAddTab() {
   setupSF();
 }
 function populateCatSelect() {
-  const sel=q("i-cat"); if(!sel)return; const cur=sel.value;
-  sel.innerHTML='<option value="">Auto-detect category</option>'+Object.entries(S.cats).map(([cat,ci])=>'<option value="'+cat+'">'+ci.icon+' '+cat+'</option>').join("");
-  if(cur)sel.value=cur;
+  // now renders pill buttons instead of a select
+  const pills = q("cat-pills"); if(!pills)return;
+  const cur = q("i-cat")?q("i-cat").value:"";
+  pills.innerHTML = Object.entries(S.cats).map(([cat,ci]) => {
+    const sel = cur===cat;
+    return '<button type="button" onclick="pickCat(\''+cat+'\')" style="background:'+(sel?ci.color:(S.dark?ci.dark:ci.light))+';color:'+(sel?"#fff":(S.dark?"#e2e8f0":ci.dark||"#333"))+';border:2px solid '+(sel?ci.color:"transparent")+';border-radius:999px;padding:6px 13px;font-size:12px;font-weight:'+(sel?"700":"500")+';cursor:pointer;touch-action:manipulation">'+ci.icon+' '+cat+'</button>';
+  }).join("");
+}
+
+function pickCat(cat) {
+  const inp = q("i-cat"); if(inp)inp.value=cat;
+  populateCatSelect(); // re-render pills with new selection
+  // update preview
+  const det=cat||categorize(q("i-desc")?q("i-desc").value||"x":"x");
+  const info=S.cats[det]||DC.Other;const prev=q("cat-preview");
+  if(prev){prev.textContent="→ "+det;prev.style.color=info.color;}
 }
 function setupBudgetsTab() { q("btn-newcat").onclick=()=>{const f=q("newcat-form");f.style.display=f.style.display==="none"?"block":"none";}; q("btn-addcat").onclick=addCat; q("btn-cancelcat").onclick=()=>{q("newcat-form").style.display="none";}; }
 function setupSettingsTab() {
+  // display name
+  const sn = q("sett-name"); if(sn)sn.value=S.display_name||"";
+  const bsn = q("btn-save-name");
+  if(bsn)bsn.onclick=async()=>{
+    const name=q("sett-name").value.trim();if(!name){toast("Enter a name");return;}
+    S.display_name=name;cacheSett();renderHeader();await dbSaveSett();toast("Name updated!");
+  };
+
+  // template picker in settings
+  let settTemplateSel = S.budget_template||"professional";
+  function settSelectTemplate(key){ settTemplateSel=key; renderTemplateCards("sett-templates",key,"settSelectTemplate"); }
+  window.settSelectTemplate = settSelectTemplate;
+  renderTemplateCards("sett-templates", settTemplateSel, "settSelectTemplate");
+
+  const bat = q("btn-apply-template");
+  if(bat)bat.onclick=()=>{
+    if(confirm("This will replace your current budgets with the "+TEMPLATES[settTemplateSel].label+" template. Continue?")){
+      applyTemplate(settTemplateSel);renderBudgetList();if(S.tab===1)renderDynamic();
+      dbSaveSett();toast("Template applied!");
+    }
+  };
+
+  // currency
   const sel=q("sel-currency"); if(sel){sel.innerHTML=Object.entries(CURRENCIES).map(([code,c])=>'<option value="'+code+'">'+c.symbol+' '+code+' — '+c.name+'</option>').join("");sel.value=S.currency;}
   q("btn-save-currency").onclick=async()=>{S.currency=q("sel-currency").value;await dbSaveSett();refreshUI();renderBudgetList();toast("Currency: "+S.currency);setupSettingsTab();};
   q("btn-light-s").onclick=async()=>{S.dark=false;applyTheme();await dbSaveSett();renderHeader();setupSettingsTab();};
@@ -821,12 +1009,15 @@ function setupSettingsTab() {
 
 // ── Actions ──
 async function addExpense() {
-  const desc=q("i-desc").value.trim(),amt=parseFloat(q("i-amt").value),date=q("i-date").value,cat=q("i-cat").value||categorize(desc);
+  const desc=q("i-desc").value.trim(),amt=parseFloat(q("i-amt").value),date=q("i-date").value;
+  const catInp=q("i-cat"); const cat=catInp?catInp.value||categorize(desc):categorize(desc);
   if(!desc||isNaN(amt)||amt<=0){toast("Enter a valid description and amount.");return;}
   const isRec=q("i-recurring").checked;
   if(isRec){const ci=S.cats[cat]||DC.Other;S.recurring.push({id:"rec-"+Date.now(),desc,amount:amt,cat,freq:recFreq,icon:ci.icon});cacheSett();toast("Saved as "+recFreq+" recurring ✓");}
   const tid="tmp-"+Date.now(); S.expenses.unshift({id:tid,desc,amount:amt,date,cat}); cacheExp();
-  q("i-desc").value="";q("i-amt").value="";q("i-cat").value="";q("cat-preview").textContent="";
+  q("i-desc").value="";q("i-amt").value="";
+  if(catInp)catInp.value=""; populateCatSelect();
+  q("cat-preview").textContent="";
   q("i-recurring").checked=false;q("recurring-opts").style.display="none";
   q("parse-result").style.display="none";q("raw-msg").value="";
   renderRecentList();q("exp-count").textContent=S.expenses.length+" total";renderHeader();toast("Added to "+cat+"!");
@@ -896,7 +1087,8 @@ function genFeedback() {
 function renderHeader() {
   const ts=totalSpend(),tb=totalBudget(),left=tb-ts,dl=daysLeft(),daily=left>0&&dl>0?Math.round(left/dl):0;
   const col=budgetColor(left,tb||1),isOver=left<0;
-  const ul=offline?"⚡ Offline":(user&&user.email?"☁ "+user.email:"");
+  const name = S.display_name || (user&&user.email?user.email.split("@")[0]:"");
+  const ul = offline ? "⚡ Offline" : (user ? "☁ "+user.email : "");
   let budLine='<span style="color:'+col+';font-weight:700">'+fmt(Math.abs(left))+(isOver?" over budget":" left")+'</span>';
   if(isOver)budLine+=' <span style="color:#E85D4A;font-size:11px;font-weight:600">— spend less!</span>';
   else if(dl>0&&daily>0)budLine+=' <span style="color:var(--m);font-size:11px">('+dl+'d left · '+fmt(daily)+'/day)</span>';
@@ -907,8 +1099,11 @@ function renderHeader() {
     '<div style="margin-bottom:16px">'
     +(isFounding?'<div style="background:linear-gradient(135deg,#6366F1,#8B5CF6);border-radius:10px;padding:8px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between"><span style="font-size:12px;font-weight:700;color:#fff">🌟 Founding Member #'+memberNum+'</span><span style="font-size:11px;color:rgba(255,255,255,.8);font-weight:600">Lifetime Free Access</span></div>':"")
     +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
-    +'<div><h1 style="font-size:21px;font-weight:800;letter-spacing:-.5px">KharchaPlus</h1>'
-    +'<p style="font-size:12px;color:var(--m);margin-top:3px">'+(ul?'<span style="background:'+(offline?"#FFFBEB":"#ECFDF5")+';color:'+(offline?"#6B3A00":"#065F46")+';border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700">'+ul+'</span> · ':"")+fmt(ts)+' spent · '+budLine+'</p></div>'
+    +'<div>'
+    +'<h1 style="font-size:21px;font-weight:800;letter-spacing:-.5px">KharchaPlus</h1>'
+    +(name?'<p style="font-size:13px;font-weight:600;color:var(--a);margin-top:2px">Hey, '+name+' 👋</p>':"")
+    +'<p style="font-size:12px;color:var(--m);margin-top:2px">'+fmt(ts)+' spent · '+budLine+'</p>'
+    +'</div>'
     +'<div style="display:flex;gap:8px">'
     +'<button onclick="S.dark=!S.dark;cacheSett();applyTheme();renderHeader();dbSaveSett()" style="background:var(--s2);color:var(--t);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:14px">'+(S.dark?"☀":"🌙")+'</button>'
     +(!offline&&user?'<button onclick="doLogout()" style="background:var(--s2);color:var(--m);border:1px solid var(--b);border-radius:999px;padding:8px 12px;font-size:13px">Logout</button>':"")
