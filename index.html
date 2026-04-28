@@ -44,8 +44,8 @@ body.dark .pill.on{background:#334155}
 .tile{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .bwrap{height:8px;background:var(--s2);border-radius:4px;overflow:hidden;margin-top:6px}
 .bfill{height:100%;border-radius:4px}
-.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px}
-.tog{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;max-width:660px}
+body{background:var(--bg);color:var(--t);overflow-x:hidden}.tog{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0}
 .tog input{opacity:0;width:0;height:0}
 .tog-sl{position:absolute;cursor:pointer;inset:0;background:#CBD5E1;border-radius:999px;transition:.2s}
 .tog-sl:before{content:"";position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
@@ -59,7 +59,7 @@ body.dark .pill.on{background:#334155}
 #sync.saved{background:#ECFDF5;color:#065F46}
 #sync.err{background:#FEF0EE;color:#7A2518}
 #sync.offline{background:#F1F5F9;color:#64748B}
-#auth-wrap,#forgot-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+#auth-wrap,#forgot-wrap,#onboarding-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;width:100%}
 #forgot-wrap{display:none}
 .acard{background:var(--s);border:1px solid var(--b);border-radius:20px;padding:32px 26px;width:100%;max-width:400px}
 .ath{font-size:22px;font-weight:800;margin-bottom:4px}
@@ -73,12 +73,20 @@ body.dark .pill.on{background:#334155}
 .aor{display:flex;align-items:center;gap:10px;margin:16px 0}
 .aor-l{flex:1;height:1px;background:var(--b)}
 .flink{text-align:center;font-size:13px;color:var(--a);cursor:pointer;margin-top:12px;font-weight:600;touch-action:manipulation}
-#app-wrap{display:none}
-#shell{max-width:660px;margin:0 auto;padding:16px 16px 110px}
+/* ── Layout ── */
+body{background:var(--bg);color:var(--t);overflow-x:hidden}
+#app-wrap{display:none;width:100%;min-height:100vh;display:none}
+#shell{max-width:660px;margin-left:auto;margin-right:auto;padding:16px 16px 110px;width:100%;box-sizing:border-box;position:relative}
+#top-tabs{width:100%;box-sizing:border-box}
+#content{width:100%;box-sizing:border-box}
+#tab-add,#tab-budgets,#tab-settings{width:100%;box-sizing:border-box}
 #bnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--s);border-top:1px solid var(--b);padding:8px 0 calc(8px + env(safe-area-inset-bottom));z-index:200;justify-content:space-around}
 #bnav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:600;color:var(--m);padding:4px 8px;min-width:52px;touch-action:manipulation;border-radius:10px}
 #bnav button.on{color:var(--a)}
 .ni{font-size:20px}
+.card{background:var(--s);border:1px solid var(--b);border-radius:var(--rad);width:100%;box-sizing:border-box}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;width:100%;box-sizing:border-box}
+.bwrap{height:8px;background:var(--s2);border-radius:4px;overflow:hidden;margin-top:6px;width:100%}
 @media(max-width:599px){#bnav{display:flex}#top-tabs{display:none!important}#shell{padding:12px 12px 100px}}
 @media(min-width:600px){#bnav{display:none!important}#top-tabs{display:flex!important}}
 .fb-box{background:var(--s2);border-radius:12px;padding:16px;margin-top:14px}
@@ -338,7 +346,7 @@ body.dark .pill.on{background:#334155}
       </div>
     </div>
 
-    <div id="content" style="display:none"></div>
+    <div id="content" style="display:none;max-width:660px;width:100%"></div>
   </div>
   <nav id="bnav"></nav>
 </div>
@@ -475,6 +483,9 @@ function cacheSett() {
   localStorage.setItem("et_currency",S.currency);
   localStorage.setItem("et_rollover",JSON.stringify(S.rollover));
   localStorage.setItem("et_recurring",JSON.stringify(S.recurring));
+  localStorage.setItem("et_display_name",S.display_name||"");
+  localStorage.setItem("et_onboarding",JSON.stringify(S.onboarding_complete));
+  localStorage.setItem("et_template",S.budget_template||"professional");
 }
 
 // ── Founding member ──
@@ -594,7 +605,7 @@ async function loadCloud() {
       S.is_founding_member = sett.is_founding_member||false;
       S.member_number = sett.member_number||null;
       S.display_name = sett.display_name||null;
-      S.onboarding_complete = sett.onboarding_complete||false;
+      S.onboarding_complete = sett.onboarding_complete === true; // only true counts, null/false both trigger onboarding
       S.budget_template = sett.budget_template||"professional";
       cacheSett();
     }
@@ -1155,8 +1166,17 @@ function renderTrendChart() {
   const months=[];for(let i=-5;i<=0;i++)months.push(getMonthKey(i));
   const totals=months.map(m=>monthTotal(m)),max=Math.max(...totals,1);
   const H=110,bw=32,gap=10,pad=8,tc=S.dark?"#94A3B8":"#64748B",totalW=pad*2+6*bw+5*gap;
-  const bars=months.map((m,i)=>{const val=totals[i],bh=Math.max((val/max)*(H-28),2),x=pad+i*(bw+gap),y=H-22-bh,isCur=i===5,has=val>0;return'<g style="cursor:'+(has?"pointer":"default")+'" onclick="'+(has?'openModal(\''+m+'\')':'')+'">'+'<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="5" fill="'+(isCur?"#6366F1":(S.dark?"#334155":"#E2E8F0"))+'"/>'+(has?'<text x="'+(x+bw/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="9" font-weight="600" fill="'+(isCur?"#6366F1":tc)+'">'+fmt(val).replace(/[^\d,\.]/g,"")+'</text>':"")+' <text x="'+(x+bw/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="9" fill="'+(isCur?"#6366F1":tc)+'" font-weight="'+(isCur?"700":"400")+'">'+getMonthLabel(m)+'</text></g>';}).join("");
-  return'<svg viewBox="0 0 '+totalW+' '+(H+18)+'" style="width:100%;overflow:visible">'+bars+'<text x="'+(totalW/2)+'" y="'+(H+16)+'" text-anchor="middle" font-size="9" fill="'+tc+'">Tap a bar to view that month</text></svg>';
+  const bars=months.map((m,i)=>{
+    const val=totals[i],bh=Math.max((val/max)*(H-28),2),x=pad+i*(bw+gap),y=H-22-bh,isCur=i===5,has=val>0;
+    return'<g style="cursor:'+(has?"pointer":"default")+'" onclick="'+(has?'openModal(\''+m+'\')':'')+'">'
+      +'<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="5" fill="'+(isCur?"#6366F1":(S.dark?"#334155":"#E2E8F0"))+'"/>'
+      +(has?'<text x="'+(x+bw/2)+'" y="'+(y-5)+'" text-anchor="middle" font-size="9" font-weight="600" fill="'+(isCur?"#6366F1":tc)+'">'+fmt(val).replace(/[^\d,\.]/g,"")+'</text>':"")
+      +'<text x="'+(x+bw/2)+'" y="'+(H-4)+'" text-anchor="middle" font-size="9" fill="'+(isCur?"#6366F1":tc)+'" font-weight="'+(isCur?"700":"400")+'">'+getMonthLabel(m)+'</text>'
+      +'</g>';
+  }).join("");
+  return'<svg viewBox="0 0 '+totalW+' '+(H+18)+'" preserveAspectRatio="xMidYMid meet" style="width:100%;max-width:100%;height:auto;display:block;overflow:visible">'+bars
+    +'<text x="'+(totalW/2)+'" y="'+(H+16)+'" text-anchor="middle" font-size="9" fill="'+tc+'">Tap a bar to view that month</text>'
+    +'</svg>';
 }
 function openModal(mk) {
   const label=new Date(mk+"-01").toLocaleString("default",{month:"long",year:"numeric"});
@@ -1178,12 +1198,31 @@ function renderDashboard() {
   const curTotal=Object.values(curT).reduce((a,b)=>a+b,0),prevTotal=Object.values(prevT).reduce((a,b)=>a+b,0);
   const od=prevTotal>0?Math.round(((curTotal-prevTotal)/prevTotal)*100):null;
   const momRows=Object.entries(S.cats).map(([cat,ci])=>{const c2=curT[cat]||0,p2=prevT[cat]||0;if(!c2&&!p2)return"";const diff=p2>0?Math.round(((c2-p2)/p2)*100):null,up=diff>0;return'<div style="display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--b)"><div class="tile" style="background:'+(S.dark?ci.dark:ci.light)+';width:36px;height:36px;font-size:17px">'+ci.icon+'</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">'+cat+'</div><div style="font-size:11px;color:var(--m)">Last: '+(p2>0?fmt(p2):"—")+'</div></div><div style="text-align:right;flex-shrink:0"><div style="font-size:14px;font-weight:700;color:'+ci.color+'">'+fmt(c2)+'</div>'+(diff!==null?'<div style="font-size:11px;font-weight:700;color:'+(up?"var(--r)":"var(--g)")+'\">'+(up?"↑":"↓")+' '+Math.abs(diff)+'%</div>':'<div style="font-size:11px;color:var(--m)">new</div>')+'</div></div>';}).join("");
-  const catRows=Object.entries(S.cats).map(([cat,ci],i,arr)=>{const spent=ct[cat]||0,eff=effectiveBudget(cat);if(!spent&&!eff)return"";const pct=eff>0?Math.min((spent/eff)*100,100):0,over=spent>eff&&eff>0,warn=!over&&pct>75&&eff>0;return'<div style="padding:13px 16px;'+(i<arr.length-1?"border-bottom:1px solid var(--b)":"")+'"><div style="display:flex;align-items:center;gap:10px"><div class="tile" style="background:'+(S.dark?ci.dark:ci.light)+'">'+ci.icon+'</div><div style="flex:1"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px"><span style="font-weight:600;font-size:13px">'+cat+'</span><div style="display:flex;gap:5px;align-items:center">'+(over?'<span class="badge" style="background:'+(S.dark?"#3B1A1A":"#FEF0EE")+';color:var(--r)">over!</span>':"")+( warn?'<span class="badge" style="background:'+(S.dark?"#3B2A00":"#FFFBEB")+';color:var(--y)">near!</span>':"")+' <span style="font-size:13px;font-weight:700;color:'+(over?"var(--r)":"var(--t)")+'">'+fmt(spent)+'</span>'+(eff>0?'<span style="font-size:11px;color:var(--m)">/ '+fmt(eff)+'</span>':"")+' </div></div><div class="bwrap"><div class="bfill" style="width:'+pct+'%;background:'+(over?"var(--r)":warn?"var(--y)":ci.color)+'"></div></div></div></div></div>';}).join("");
-  return'<div class="sgrid">'+[["Total Spent",fmt(ts),"#6366F1"],["Budget Left",fmt(Math.max(0,tb-ts)),"#10B981"],["Entries",S.expenses.length,"#F59E0B"]].map(([l,v,c])=>'<div class="card" style="text-align:center;padding:14px 8px"><div style="font-size:11px;color:var(--m);margin-bottom:4px">'+l+'</div><div style="font-size:20px;font-weight:800;color:'+c+'">'+v+'</div></div>').join("")+'</div>'
-    +'<p style="font-weight:700;font-size:15px;margin-bottom:10px">By Category</p><div class="card" style="overflow:hidden;padding:0;margin-bottom:20px">'+catRows+'</div>'
-    +'<div class="card" style="padding:18px;margin-bottom:20px"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px"><div><p style="font-weight:700;font-size:15px">6-Month Trend</p><p style="font-size:12px;color:var(--m);margin-top:2px">Tap bar for breakdown</p></div>'+(od!==null?'<div style="text-align:right"><div style="font-size:13px;font-weight:700;color:'+(od>0?"var(--r)":"var(--g)")+'\">'+(od>0?"↑":"↓")+' '+Math.abs(od)+'% vs last month</div><div style="font-size:11px;color:var(--m);margin-top:2px">'+fmt(prevTotal)+' → '+fmt(curTotal)+'</div></div>':'<div style="font-size:12px;color:var(--m)">First month</div>')+' </div>'+renderTrendChart()+'</div>'
-    +'<p style="font-weight:700;font-size:15px;margin-bottom:10px">vs Last Month</p><div class="card" style="overflow:hidden;padding:0;margin-bottom:20px">'+(momRows||'<div style="padding:20px;text-align:center;color:var(--m);font-size:13px">Need 2 months of data</div>')+'</div>'
-    +'<div class="card" style="padding:18px;background:'+(S.dark?"#1A1040":"#F5F3FF")+';border-color:'+(S.dark?"#3B2A80":"#C4B5FD")+'"><p style="font-weight:800;font-size:15px;color:'+(S.dark?"#C4B5FD":"#4C1D95")+'">💡 Spending Insights</p><p style="font-size:12px;color:'+(S.dark?"#A78BFA":"#7C3AED")+';margin:3px 0 14px">Based on this month</p><div class="fb-box" style="background:'+(S.dark?"#0F0A2A":"#EDE9FE")+'">'+fb.map(f=>'<div class="fb-item"><div style="font-size:22px;flex-shrink:0;margin-top:1px">'+f.icon+'</div><div><div style="font-size:12px;font-weight:700;color:'+(S.dark?"#C4B5FD":"#4C1D95")+';margin-bottom:3px">'+f.label+'</div><div style="font-size:12.5px;color:'+(S.dark?"#DDD6FE":"#3730A3")+';line-height:1.6">'+f.text+'</div></div></div>').join("")+'</div></div>';
+  const catRows=Object.entries(S.cats).map(([cat,ci],i,arr)=>{const spent=ct[cat]||0,eff=effectiveBudget(cat);if(!spent&&!eff)return"";const pct=eff>0?Math.min((spent/eff)*100,100):0,over=spent>eff&&eff>0,warn=!over&&pct>75&&eff>0;return'<div style="padding:13px 16px;'+(i<arr.length-1?"border-bottom:1px solid var(--b)":"")+'"><div style="display:flex;align-items:center;gap:10px"><div class="tile" style="background:'+(S.dark?ci.dark:ci.light)+'">'+ci.icon+'</div><div style="flex:1;min-width:0"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px"><span style="font-weight:600;font-size:13px">'+cat+'</span><div style="display:flex;gap:5px;align-items:center">'+(over?'<span class="badge" style="background:'+(S.dark?"#3B1A1A":"#FEF0EE")+';color:var(--r)">over!</span>':"")+( warn?'<span class="badge" style="background:'+(S.dark?"#3B2A00":"#FFFBEB")+';color:var(--y)">near!</span>':"")+' <span style="font-size:13px;font-weight:700;color:'+(over?"var(--r)":"var(--t)")+'">'+fmt(spent)+'</span>'+(eff>0?'<span style="font-size:11px;color:var(--m)">/ '+fmt(eff)+'</span>':"")+' </div></div><div class="bwrap"><div class="bfill" style="width:'+pct+'%;background:'+(over?"var(--r)":warn?"var(--y)":ci.color)+'"></div></div></div></div></div>';}).join("");
+
+  return'<div style="width:100%;box-sizing:border-box">'
+    +'<div class="sgrid">'
+    +[["Total Spent",fmt(ts),"#6366F1"],["Budget Left",fmt(Math.max(0,tb-ts)),"#10B981"],["Entries",S.expenses.length,"#F59E0B"]].map(([l,v,c])=>'<div class="card" style="text-align:center;padding:14px 8px"><div style="font-size:11px;color:var(--m);margin-bottom:4px">'+l+'</div><div style="font-size:20px;font-weight:800;color:'+c+'">'+v+'</div></div>').join("")
+    +'</div>'
+    +'<p style="font-weight:700;font-size:15px;margin-bottom:10px">By Category</p>'
+    +'<div class="card" style="overflow:hidden;padding:0;margin-bottom:20px;width:100%">'+catRows+'</div>'
+    +'<div class="card" style="padding:18px;margin-bottom:20px;width:100%;overflow:hidden">'
+      +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">'
+        +'<div><p style="font-weight:700;font-size:15px">6-Month Trend</p><p style="font-size:12px;color:var(--m);margin-top:2px">Tap bar for breakdown</p></div>'
+        +(od!==null?'<div style="text-align:right"><div style="font-size:13px;font-weight:700;color:'+(od>0?"var(--r)":"var(--g)")+'\">'+(od>0?"↑":"↓")+' '+Math.abs(od)+'% vs last month</div><div style="font-size:11px;color:var(--m);margin-top:2px">'+fmt(prevTotal)+' → '+fmt(curTotal)+'</div></div>':'<div style="font-size:12px;color:var(--m)">First month</div>')
+      +'</div>'
+      +'<div style="width:100%;overflow:hidden">'+renderTrendChart()+'</div>'
+    +'</div>'
+    +'<p style="font-weight:700;font-size:15px;margin-bottom:10px">vs Last Month</p>'
+    +'<div class="card" style="overflow:hidden;padding:0;margin-bottom:20px;width:100%">'+(momRows||'<div style="padding:20px;text-align:center;color:var(--m);font-size:13px">Need 2 months of data</div>')+'</div>'
+    +'<div class="card" style="padding:18px;background:'+(S.dark?"#1A1040":"#F5F3FF")+';border-color:'+(S.dark?"#3B2A80":"#C4B5FD")+';width:100%">'
+      +'<p style="font-weight:800;font-size:15px;color:'+(S.dark?"#C4B5FD":"#4C1D95")+'">💡 Spending Insights</p>'
+      +'<p style="font-size:12px;color:'+(S.dark?"#A78BFA":"#7C3AED")+';margin:3px 0 14px">Based on this month</p>'
+      +'<div class="fb-box" style="background:'+(S.dark?"#0F0A2A":"#EDE9FE")+'">'
+        +fb.map(f=>'<div class="fb-item"><div style="font-size:22px;flex-shrink:0;margin-top:1px">'+f.icon+'</div><div><div style="font-size:12px;font-weight:700;color:'+(S.dark?"#C4B5FD":"#4C1D95")+';margin-bottom:3px">'+f.label+'</div><div style="font-size:12.5px;color:'+(S.dark?"#DDD6FE":"#3730A3")+';line-height:1.6">'+f.text+'</div></div></div>').join("")
+      +'</div>'
+    +'</div>'
+  +'</div>';
 }
 
 function renderReports() {
@@ -1191,7 +1230,8 @@ function renderReports() {
   const sorted=Object.keys(pg).sort().reverse();
   return'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap"><div class="pill-bar" style="flex:1">'+["weekly","monthly","quarterly","yearly"].map(p=>'<button class="pill '+(S.period===p?"on":"")+'" onclick="S.period=\''+p+'\';renderDynamic()">'+p.charAt(0).toUpperCase()+p.slice(1)+'</button>').join("")+'</div><div style="display:flex;gap:8px;flex-shrink:0"><label class="bp" style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:10px 14px;font-size:13px;border-radius:12px;font-weight:600">⬆ Import<input type="file" accept=".xls,.xlsx,.csv,.tsv" onchange="importFile(this)"/></label><button class="bg" onclick="dlExcel()" style="padding:10px 14px;font-size:13px">⬇ Export</button></div></div>'
     +(!sorted.length?'<div class="card" style="padding:32px;text-align:center;color:var(--m)">No data yet!</div>':"")
-    +sorted.map(period=>{const data=pg[period];const total=Object.values(data).reduce((a,b)=>a+b,0);return'<div class="card" style="margin-bottom:14px;padding:16px"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><span style="font-weight:700;font-size:15px">'+period+'</span><span style="font-weight:800;color:var(--a)">'+fmt(total)+'</span></div>'+Object.entries(data).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{const ci=S.cats[cat]||DC.Other,pct=Math.round((amt/total)*100);return'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px;width:24px;text-align:center;flex-shrink:0">'+ci.icon+'</span><span style="font-size:13px;width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+cat+'</span><div class="bwrap" style="flex:1"><div class="bfill" style="width:'+pct+'%;background:'+ci.color+'"></div></div><span style="font-size:12px;color:var(--m);flex-shrink:0;min-width:90px;text-align:right">'+fmt(amt)+' ('+pct+'%)</span></div>';}).join("")+'</div>';}).join("");
+    +sorted.map(period=>{const data=pg[period];const total=Object.values(data).reduce((a,b)=>a+b,0);return'<div class="card" style="margin-bottom:14px;padding:16px;width:100%;box-sizing:border-box"><div style="display:flex;justify-content:space-between;margin-bottom:14px"><span style="font-weight:700;font-size:15px">'+period+'</span><span style="font-weight:800;color:var(--a)">'+fmt(total)+'</span></div>'+Object.entries(data).sort((a,b)=>b[1]-a[1]).map(([cat,amt])=>{const ci=S.cats[cat]||DC.Other,pct=Math.round((amt/total)*100);return'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:18px;width:24px;text-align:center;flex-shrink:0">'+ci.icon+'</span><span style="font-size:13px;width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+cat+'</span><div class="bwrap" style="flex:1"><div class="bfill" style="width:'+pct+'%;background:'+ci.color+'"></div></div><span style="font-size:12px;color:var(--m);flex-shrink:0;min-width:90px;text-align:right">'+fmt(amt)+' ('+pct+'%)</span></div>';}).join("")+'</div>';}).join("")
+    +'</div>';
 }
 </script>
 </body>
